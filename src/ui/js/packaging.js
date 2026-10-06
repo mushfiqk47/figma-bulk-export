@@ -91,7 +91,7 @@ async function downloadZip() {
       updateProgress(pct / 100);
     }
   });
-  download(blob, 'bulk-' + state.format.toLowerCase() + '-export.zip');
+  download(blob, 'velto-' + state.format.toLowerCase() + '-export.zip');
 }
 
 function escapeHtml(str) {

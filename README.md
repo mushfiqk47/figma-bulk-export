@@ -1,6 +1,18 @@
-# Bulk export
+# Velto
 
-Export the frames you select on the canvas as PNG, JPG, SVG, PDF, or standalone HTML. No build step, no network, plain JavaScript.
+Export multiple frames from your canvas quickly without repetitive manual exports.
+
+Select any frames on your canvas, pick your desired format and scale, and download your assets directly as individual files, a clean ZIP archive, a merged multi-page PDF document, or a standalone HTML file.
+
+## Key Features
+
+- **Live Canvas Previews**: View thumbnail previews of all selected frames directly in the plugin list.
+- **Multi-Format Support**: Export to PNG, JPG, SVG, PDF, or standalone HTML.
+- **Standalone HTML Export**: Export a single frame into a self-contained, responsive HTML document with 100% vector precision and outlined text—zero external fonts, CDNs, or network requests required.
+- **Multi-Page PDF Merge**: Combine selected frames into a single, ordered multi-page PDF document, or download each frame as its own individual PDF.
+- **Custom Scaling**: Choose between None, 0.5x, 1x, 2x, 3x, and 4x resolution for raster formats (PNG and JPG).
+- **Fast Offline Packaging**: Bundled with in-memory zip compression (STORE and DEFLATE) for near-instant downloads.
+- **100% Private & Offline**: Zero external network calls, zero analytics, and zero tracking (`allowedDomains: ["none"]`). All processing happens locally on your machine.
 
 ## Previews
 
@@ -55,14 +67,17 @@ node build_ui.js
 
 The script inlines the modular HTML, CSS, JavaScript parts, and vendor libraries into `ui.html`.
 
-## Import via manifest
+## How to Use
 
-1. In Figma desktop app: Plugins > Development > Import plugin from manifest.
-2. Select the `manifest.json` in this folder.
-3. On the canvas, select the frames you want.
-4. Run: Plugins > Development > Bulk export.
-5. The plugin lists only that selection with thumbnail previews. Uncheck anything to skip it, Continue, pick format/scale, and Export. Selecting a single frame unlocks a standalone, pixel-perfect HTML export option.
-6. After export the plugin stays on the done screen. Back or Export more returns to the selection (refreshed).
+1. **Select frames**: Select one or more frames, components, or component sets on your Figma canvas.
+2. **Launch Velto**: Open **Plugins** > **Development** > **Velto**. Your selected frames appear instantly with live thumbnail previews.
+3. **Configure & Export**: Pick your file format, scale, or PDF mode, then click **Export**. Selecting a single frame also unlocks the standalone HTML export option.
+4. **Done screen**: After export, stay on the completion screen, go **Back**, or click **Export more** to return with your canvas selection refreshed.
+
+### Installation (Import via Manifest)
+
+1. In the Figma desktop app, go to **Plugins** > **Development** > **Import plugin from manifest...**.
+2. Select the [`manifest.json`](manifest.json) file in this directory.
 
 ## Notes and limits
 

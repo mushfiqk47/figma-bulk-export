@@ -8,7 +8,7 @@
 
 ## 1. Project Overview & Current Status
 
-**Bulk export** is a zero-network, high-performance Figma plugin designed to bulk-export canvas frames, components, and component sets to **PNG, JPG, SVG, PDF, or standalone HTML**.
+**Velto** is a zero-network, high-performance Figma plugin designed to bulk-export canvas frames, components, and component sets to **PNG, JPG, SVG, PDF, or standalone HTML**.
 
 ### Key Architectural Tenets
 * **Strictly Offline & Sandboxed:** Operates with `"networkAccess": { "allowedDomains": ["none"] }` in `manifest.json`. Zero external HTTP requests, telemetry, or remote CDN dependencies are allowed.
@@ -199,7 +199,7 @@ Get-ChildItem -Path "src/ui/js/*.js" | ForEach-Object { node --check $_.FullName
 1. Open Figma Desktop App.
 2. Go to **Plugins** > **Development** > **Import plugin from manifest...**.
 3. Select `c:\Users\MUSHFIQ\Documents\Figma Export Plugins\manifest.json`.
-4. Open any design document, select frames, and run **Plugins** > **Development** > **Bulk export**.
+4. Open any design document, select frames, and run **Plugins** > **Development** > **Velto**.
 
 ---
 
@@ -259,13 +259,13 @@ When adding diagnostics or debugging features, use consistent structured prefixe
 
 ```javascript
 // Sandbox thread logging:
-console.log('[BulkExport:Sandbox] Selection updated:', details.length, 'frames');
-console.warn('[BulkExport:Sandbox] Memory warning on frame:', node.name);
-console.error('[BulkExport:Sandbox] Export failed for id:', id, err);
+console.log('[Velto:Sandbox] Selection updated:', details.length, 'frames');
+console.warn('[Velto:Sandbox] Memory warning on frame:', node.name);
+console.error('[Velto:Sandbox] Export failed for id:', id, err);
 
 // UI thread logging:
-console.log('[BulkExport:UI] Received file:', msg.name, '(' + msg.bytes.length + ' bytes)');
-console.error('[BulkExport:UI] Packaging failed:', err);
+console.log('[Velto:UI] Received file:', msg.name, '(' + msg.bytes.length + ' bytes)');
+console.error('[Velto:UI] Packaging failed:', err);
 ```
 
 ### 7.3 Log Level Guidelines
@@ -289,7 +289,7 @@ try {
   }
   
   // 1. Technical console output for developers:
-  console.error('[BulkExport:Error]', err);
+  console.error('[Velto:Error]', err);
   
   // 2. Surface to UI failure list for user:
   displayUserError(userMessage);
