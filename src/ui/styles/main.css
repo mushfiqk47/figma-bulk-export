@@ -186,6 +186,9 @@ body.figma-dark .link:hover {
   border-radius: var(--r);
   cursor: pointer;
   background: var(--bg2);
+  contain: layout style;
+  content-visibility: auto;
+  contain-intrinsic-size: 58px;
 }
 
 .row input {
@@ -511,11 +514,13 @@ body.figma-dark .scl button[aria-pressed="true"]:hover {
   stroke-dashoffset: 339.3;
   transform: rotate(-90deg);
   transform-origin: 80px 80px;
+  will-change: stroke-dashoffset;
   transition: stroke-dashoffset 0.25s ease, color 0.35s ease, stroke-width 0.35s ease;
 }
 
 .orbit-dot-group {
   transform-origin: 80px 80px;
+  will-change: transform;
   transition: opacity 0.3s ease;
 }
 

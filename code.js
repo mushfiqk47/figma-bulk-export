@@ -34,18 +34,19 @@ function canvasSelection() {
   try { return figma.currentPage.selection || []; } catch (e) { return []; }
 }
 
-function selectedDetails() {
+function selectedDetails(sel) {
   var out = [];
   var seen = {};
-  var sel = canvasSelection();
-  for (var i = 0; i < sel.length; i++) {
-    var target = getExportableNode(sel[i]);
+  var list = sel || canvasSelection();
+  var pg = '';
+  try { pg = figma.currentPage ? figma.currentPage.name : ''; } catch (e) {}
+
+  for (var i = 0; i < list.length; i++) {
+    var target = getExportableNode(list[i]);
     if (target && !seen[target.id]) {
       seen[target.id] = true;
       var w = 0, h = 0;
       try { w = Math.round(target.width || 0); h = Math.round(target.height || 0); } catch (e) {}
-      var pg = '';
-      try { pg = figma.currentPage ? figma.currentPage.name : ''; } catch (e) {}
       var nm = 'Untitled';
       try { nm = String(target.name || 'Untitled'); } catch (e) {}
       out.push({ id: target.id, name: nm, width: w, height: h, page: pg });
@@ -55,19 +56,28 @@ function selectedDetails() {
 }
 
 function postFrames() {
-  var details = selectedDetails();
-  var total = 0;
-  try { total = canvasSelection().length; } catch (e) {}
+  var sel = canvasSelection();
+  var details = selectedDetails(sel);
   figma.ui.postMessage({
     type: 'frames',
     selected: details.map(function (d) { return d.id; }),
     selectedFrames: details,
-    skipped: Math.max(0, total - details.length)
+    skipped: Math.max(0, sel.length - details.length)
   });
 }
 
-figma.on('selectionchange', function () { postFrames(); });
-figma.on('currentpagechange', function () { postFrames(); });
+// Debounce rapid canvas selection updates (e.g. marquee drag selection)
+var selectionTimer = null;
+function schedulePostFrames() {
+  if (selectionTimer) return;
+  selectionTimer = setTimeout(function () {
+    selectionTimer = null;
+    postFrames();
+  }, 16);
+}
+
+figma.on('selectionchange', schedulePostFrames);
+figma.on('currentpagechange', schedulePostFrames);
 
 // dynamic-page disallows documentchange without loadAllPagesAsync.
 // selectionchange and currentpagechange handle active canvas state.
@@ -109,25 +119,34 @@ figma.ui.onmessage = async function (msg) {
 
   if (msg.type === 'get-thumbnails') {
     cancelThumbnails = false;
-    var thumbIds = Array.isArray(msg.ids) ? msg.ids : [];
-    for (var t = 0; t < thumbIds.length; t++) {
-      if (cancelThumbnails) break;
-      var tId = thumbIds[t];
-      try {
-        var tNode = await figma.getNodeByIdAsync(tId);
-        if (cancelThumbnails) break;
-        if (tNode && typeof tNode.exportAsync === 'function') {
-          var tBytes = await tNode.exportAsync({
-            format: 'PNG',
-            constraint: { type: 'WIDTH', value: 88 }
-          });
-          if (!cancelThumbnails) {
-            figma.ui.postMessage({ type: 'thumbnail', id: tId, bytes: tBytes });
-          }
+    var thumbIds = Array.isArray(msg.ids) ? msg.ids.slice() : [];
+    var THUMB_CONCURRENCY = Math.min(2, Math.max(1, thumbIds.length));
+    var thumbWorkers = [];
+
+    for (var tw = 0; tw < THUMB_CONCURRENCY; tw++) {
+      thumbWorkers.push((async function () {
+        while (thumbIds.length > 0 && !cancelThumbnails) {
+          var tId = thumbIds.shift();
+          if (!tId) break;
+          try {
+            var tNode = await figma.getNodeByIdAsync(tId);
+            if (cancelThumbnails) break;
+            if (tNode && typeof tNode.exportAsync === 'function') {
+              var tBytes = await tNode.exportAsync({
+                format: 'PNG',
+                constraint: { type: 'WIDTH', value: 88 }
+              });
+              if (!cancelThumbnails) {
+                figma.ui.postMessage({ type: 'thumbnail', id: tId, bytes: tBytes });
+              }
+            }
+          } catch (err) { /* ignore thumbnail failures */ }
+          await new Promise(function (r) { setTimeout(r, 0); });
         }
-      } catch (err) { /* ignore thumbnail failures */ }
-      await new Promise(function (r) { setTimeout(r, 0); });
+      })());
     }
+
+    await Promise.all(thumbWorkers);
     return;
   }
 
@@ -143,6 +162,7 @@ figma.ui.onmessage = async function (msg) {
     var queue = ids.map(function (id, idx) { return { id: id, index: idx }; });
     var CONCURRENCY = Math.min(2, Math.max(1, queue.length));
     var workers = [];
+    var settings = buildSettings(format, scale);
 
     for (var w = 0; w < CONCURRENCY; w++) {
       workers.push((async function worker() {
@@ -157,7 +177,6 @@ figma.ui.onmessage = async function (msg) {
               figma.ui.postMessage({ type: 'error', id: id, message: 'Node no longer exists or cannot be exported.' });
               continue;
             }
-            var settings = buildSettings(format, scale);
             var out = await node.exportAsync(settings);
             var bytes;
             var name = 'Untitled';

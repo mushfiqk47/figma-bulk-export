@@ -67,6 +67,9 @@ function applyFramesMsg(msg) {
 
 function onThumbnail(msg) {
   if (!msg || !msg.id || !msg.bytes) return;
+  if (typeof pendingThumbIds !== 'undefined') {
+    delete pendingThumbIds[msg.id];
+  }
   try {
     var blob = new Blob([msg.bytes], { type: 'image/png' });
     var url = URL.createObjectURL(blob);
@@ -78,6 +81,10 @@ function onThumbnail(msg) {
       img.src = url;
       img.alt = '';
       el.appendChild(img);
+    }
+    var row = document.getElementById('row-' + msg.id);
+    if (row && typeof thumbObserver !== 'undefined' && thumbObserver) {
+      thumbObserver.unobserve(row);
     }
   } catch (e) {}
 }
@@ -104,6 +111,13 @@ function startExport() {
   planFiles().forEach(function (p) {
     state.plan[p.id] = p.file;
   });
+
+  if (state.format === 'PDF' && state.pdf === 'single') {
+    initPipelinedPdf();
+  } else if (!(state.format === 'HTML' && state.html === 'single') && selCount() > 1) {
+    initPipelinedZip();
+  }
+
   setStatus();
   updateProgress(0);
   var b2 = $('btnBack2'); if (b2) b2.disabled = true;
@@ -154,8 +168,16 @@ function simulate() {
 function onFile(msg) {
   var raw = msg.bytes;
   var u8 = raw instanceof Uint8Array ? raw : new Uint8Array(raw || []);
-  state.files.push({ id: msg.id, name: msg.name || 'Untitled', bytes: u8 });
+  var fileItem = { id: msg.id, name: msg.name || 'Untitled', bytes: u8 };
+  state.files.push(fileItem);
   state.got++;
+
+  if (state.format === 'PDF' && state.pdf === 'single') {
+    onPdfFileArrived(fileItem);
+  } else if (typeof activeZip !== 'undefined' && activeZip) {
+    addFileToPipelinedZip(fileItem);
+  }
+
   updateProgress(state.got / Math.max(1, state.expected));
   var badge = document.getElementById('st-' + msg.id);
   if (badge) {

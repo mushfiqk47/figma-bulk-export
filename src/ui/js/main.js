@@ -18,6 +18,12 @@ function resetRun() {
   state.files = [];
   state.fails = [];
   state.pendingFrames = null;
+  if (typeof resetPipelinedZip === 'function') resetPipelinedZip();
+  if (typeof activeMergedPdf !== 'undefined') {
+    activeMergedPdf = null;
+    receivedPdfs = {};
+    nextPdfOrderIndex = 0;
+  }
   var widget = $('exportWidget');
   if (widget) widget.className = 'export-widget';
   var pt = $('progressTitle');
@@ -123,6 +129,7 @@ window.addEventListener('message', function (e) {
 
 applyTheme();
 wire();
+if (typeof initThumbObserver === 'function') initThumbObserver();
 renderList();
 show('screenSelect');
 

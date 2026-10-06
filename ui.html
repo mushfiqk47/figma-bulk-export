@@ -240,6 +240,9 @@ body.figma-dark .link:hover {
   border-radius: var(--r);
   cursor: pointer;
   background: var(--bg2);
+  contain: layout style;
+  content-visibility: auto;
+  contain-intrinsic-size: 58px;
 }
 
 .row input {
@@ -565,11 +568,13 @@ body.figma-dark .scl button[aria-pressed="true"]:hover {
   stroke-dashoffset: 339.3;
   transform: rotate(-90deg);
   transform-origin: 80px 80px;
+  will-change: stroke-dashoffset;
   transition: stroke-dashoffset 0.25s ease, color 0.35s ease, stroke-width 0.35s ease;
 }
 
 .orbit-dot-group {
   transform-origin: 80px 80px;
+  will-change: transform;
   transition: opacity 0.3s ease;
 }
 
@@ -1137,6 +1142,49 @@ function planFiles() {
 }
 
 
+var thumbObserver = null;
+var pendingThumbIds = {};
+
+function initThumbObserver() {
+  if (typeof IntersectionObserver === 'undefined') return;
+  if (thumbObserver) {
+    thumbObserver.disconnect();
+  }
+  var scrollContainer = $('frameList') ? $('frameList').parentElement : null;
+  thumbObserver = new IntersectionObserver(function (entries) {
+    var toRequest = [];
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        var id = entry.target.getAttribute('data-frame-id');
+        if (id && !state.thumbs[id] && !pendingThumbIds[id]) {
+          pendingThumbIds[id] = true;
+          toRequest.push(id);
+        }
+        if (id && state.thumbs[id]) {
+          thumbObserver.unobserve(entry.target);
+        }
+      }
+    });
+    if (toRequest.length > 0 && inFigma) {
+      send({ type: 'get-thumbnails', ids: toRequest });
+    }
+  }, {
+    root: scrollContainer,
+    rootMargin: '120px 0px 120px 0px'
+  });
+}
+
+function observeRow(rowEl, frameId) {
+  if (!rowEl || !frameId) return;
+  rowEl.setAttribute('data-frame-id', frameId);
+  if (state.thumbs[frameId]) return;
+  if (thumbObserver) {
+    thumbObserver.observe(rowEl);
+  } else {
+    requestThumbnails();
+  }
+}
+
 function revokeThumbUrls() {
   if (!state.thumbs) return;
   for (var k in state.thumbs) {
@@ -1147,18 +1195,23 @@ function revokeThumbUrls() {
     }
   }
   state.thumbs = {};
+  pendingThumbIds = {};
 }
 
 function requestThumbnails() {
   if (!inFigma) return;
   var need = [];
   state.frames.forEach(function (f) {
-    if (!state.thumbs[f.id]) need.push(f.id);
+    if (!state.thumbs[f.id] && !pendingThumbIds[f.id]) {
+      pendingThumbIds[f.id] = true;
+      need.push(f.id);
+    }
   });
   if (need.length > 0) {
     send({ type: 'get-thumbnails', ids: need });
   }
 }
+
 
 
 function updateSelectionHeader() {
@@ -1183,54 +1236,110 @@ function updateSelectionHeader() {
 
 function renderList() {
   var list = $('frameList');
+  if (!list) return;
+
+  var currentRows = {};
+  var existing = list.querySelectorAll('.row');
+  for (var e = 0; e < existing.length; e++) {
+    var rowId = existing[e].id.replace(/^row-/, '');
+    currentRows[rowId] = existing[e];
+  }
+
+  var activeIds = {};
   var frag = document.createDocumentFragment();
+
   state.frames.forEach(function (f) {
-    var lab = document.createElement('label');
-    lab.className = 'row';
-    lab.id = 'row-' + f.id;
-    var cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = !!state.checked[f.id];
-    cb.onchange = function () {
-      toggle(f.id, cb.checked);
-    };
+    activeIds[f.id] = true;
+    var lab = currentRows[f.id];
 
-    var th = document.createElement('div');
-    th.className = 'thumb';
-    th.id = 'th-' + f.id;
-    if (state.thumbs[f.id]) {
-      var img = document.createElement('img');
-      img.src = state.thumbs[f.id];
-      img.alt = '';
-      th.appendChild(img);
+    if (!lab) {
+      lab = document.createElement('label');
+      lab.className = 'row';
+      lab.id = 'row-' + f.id;
+
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = !!state.checked[f.id];
+      cb.onchange = function () {
+        toggle(f.id, cb.checked);
+      };
+
+      var th = document.createElement('div');
+      th.className = 'thumb';
+      th.id = 'th-' + f.id;
+      if (state.thumbs[f.id]) {
+        var img = document.createElement('img');
+        img.src = state.thumbs[f.id];
+        img.alt = '';
+        th.appendChild(img);
+      } else {
+        var icon = document.createElement('span');
+        icon.className = 'th-ph';
+        icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="11" height="11" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 9.5L4.5 6.5L8 10L10 8L12.5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        th.appendChild(icon);
+      }
+
+      var m = document.createElement('span');
+      m.className = 'm';
+      var n = document.createElement('span');
+      n.className = 'n';
+      n.textContent = f.name;
+      var s = document.createElement('span');
+      s.className = 's';
+      s.textContent = (f.page || '') + fmtWH(f);
+      m.appendChild(n);
+      m.appendChild(s);
+
+      var st = document.createElement('span');
+      st.className = 'st';
+      st.id = 'st-' + f.id;
+      st.textContent = state.checked[f.id] ? 'Selected' : '';
+
+      lab.appendChild(cb);
+      lab.appendChild(th);
+      lab.appendChild(m);
+      lab.appendChild(st);
+
+      frag.appendChild(lab);
+      observeRow(lab, f.id);
     } else {
-      var icon = document.createElement('span');
-      icon.className = 'th-ph';
-      icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="11" height="11" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 9.5L4.5 6.5L8 10L10 8L12.5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-      th.appendChild(icon);
+      var cbExisting = lab.querySelector('input[type="checkbox"]');
+      if (cbExisting && cbExisting.checked !== !!state.checked[f.id]) {
+        cbExisting.checked = !!state.checked[f.id];
+      }
+      var nExisting = lab.querySelector('.n');
+      if (nExisting && nExisting.textContent !== f.name) {
+        nExisting.textContent = f.name;
+      }
+      var sExisting = lab.querySelector('.s');
+      var sVal = (f.page || '') + fmtWH(f);
+      if (sExisting && sExisting.textContent !== sVal) {
+        sExisting.textContent = sVal;
+      }
+      var stExisting = document.getElementById('st-' + f.id);
+      if (stExisting) {
+        stExisting.textContent = state.checked[f.id] ? 'Selected' : '';
+      }
+      var thExisting = document.getElementById('th-' + f.id);
+      if (thExisting && state.thumbs[f.id] && !thExisting.querySelector('img')) {
+        thExisting.innerHTML = '';
+        var thImg = document.createElement('img');
+        thImg.src = state.thumbs[f.id];
+        thImg.alt = '';
+        thExisting.appendChild(thImg);
+      }
+      frag.appendChild(lab);
+      observeRow(lab, f.id);
     }
-
-    var m = document.createElement('span');
-    m.className = 'm';
-    var n = document.createElement('span');
-    n.className = 'n';
-    n.textContent = f.name;
-    var s = document.createElement('span');
-    s.className = 's';
-    s.textContent = (f.page || '') + fmtWH(f);
-    m.appendChild(n);
-    m.appendChild(s);
-    var st = document.createElement('span');
-    st.className = 'st';
-    st.id = 'st-' + f.id;
-    st.textContent = state.checked[f.id] ? 'Selected' : '';
-    lab.appendChild(cb);
-    lab.appendChild(th);
-    lab.appendChild(m);
-    lab.appendChild(st);
-    frag.appendChild(lab);
   });
-  list.innerHTML = '';
+
+  for (var rId in currentRows) {
+    if (!activeIds[rId]) {
+      if (thumbObserver) thumbObserver.unobserve(currentRows[rId]);
+      currentRows[rId].remove();
+    }
+  }
+
   list.appendChild(frag);
   updateSelectionHeader();
 }
@@ -1380,6 +1489,9 @@ function applyFramesMsg(msg) {
 
 function onThumbnail(msg) {
   if (!msg || !msg.id || !msg.bytes) return;
+  if (typeof pendingThumbIds !== 'undefined') {
+    delete pendingThumbIds[msg.id];
+  }
   try {
     var blob = new Blob([msg.bytes], { type: 'image/png' });
     var url = URL.createObjectURL(blob);
@@ -1391,6 +1503,10 @@ function onThumbnail(msg) {
       img.src = url;
       img.alt = '';
       el.appendChild(img);
+    }
+    var row = document.getElementById('row-' + msg.id);
+    if (row && typeof thumbObserver !== 'undefined' && thumbObserver) {
+      thumbObserver.unobserve(row);
     }
   } catch (e) {}
 }
@@ -1417,6 +1533,13 @@ function startExport() {
   planFiles().forEach(function (p) {
     state.plan[p.id] = p.file;
   });
+
+  if (state.format === 'PDF' && state.pdf === 'single') {
+    initPipelinedPdf();
+  } else if (!(state.format === 'HTML' && state.html === 'single') && selCount() > 1) {
+    initPipelinedZip();
+  }
+
   setStatus();
   updateProgress(0);
   var b2 = $('btnBack2'); if (b2) b2.disabled = true;
@@ -1467,8 +1590,16 @@ function simulate() {
 function onFile(msg) {
   var raw = msg.bytes;
   var u8 = raw instanceof Uint8Array ? raw : new Uint8Array(raw || []);
-  state.files.push({ id: msg.id, name: msg.name || 'Untitled', bytes: u8 });
+  var fileItem = { id: msg.id, name: msg.name || 'Untitled', bytes: u8 };
+  state.files.push(fileItem);
   state.got++;
+
+  if (state.format === 'PDF' && state.pdf === 'single') {
+    onPdfFileArrived(fileItem);
+  } else if (typeof activeZip !== 'undefined' && activeZip) {
+    addFileToPipelinedZip(fileItem);
+  }
+
   updateProgress(state.got / Math.max(1, state.expected));
   var badge = document.getElementById('st-' + msg.id);
   if (badge) {
@@ -1561,6 +1692,22 @@ function orderedFiles() {
   return out;
 }
 
+var activeZip = null;
+
+function initPipelinedZip() {
+  activeZip = new JSZip();
+}
+
+function addFileToPipelinedZip(f) {
+  if (!activeZip) return;
+  var filename = (state.plan && state.plan[f.id]) || (f.name + '.' + ext());
+  activeZip.file(filename, f.bytes);
+}
+
+function resetPipelinedZip() {
+  activeZip = null;
+}
+
 function downloadOne() {
   var f = orderedFiles()[0];
   var plan = (state.plan && state.plan[f.id]) || null;
@@ -1569,11 +1716,13 @@ function downloadOne() {
 }
 
 async function downloadZip() {
-  var zip = new JSZip();
-  var files = orderedFiles();
-  files.forEach(function (f) {
-    zip.file((state.plan && state.plan[f.id]) || (f.name + '.' + ext()), f.bytes);
-  });
+  var zip = activeZip || new JSZip();
+  if (!activeZip) {
+    var files = orderedFiles();
+    files.forEach(function (f) {
+      zip.file((state.plan && state.plan[f.id]) || (f.name + '.' + ext()), f.bytes);
+    });
+  }
   var comp = (state.format === 'SVG') ? 'DEFLATE' : 'STORE';
   var blob = await zip.generateAsync({ type: 'blob', compression: comp }, function (meta) {
     if (meta && typeof meta.percent === 'number') {
@@ -1583,6 +1732,7 @@ async function downloadZip() {
     }
   });
   download(blob, 'velto-' + state.format.toLowerCase() + '-export.zip');
+  activeZip = null;
 }
 
 function escapeHtml(str) {
@@ -1711,6 +1861,56 @@ async function downloadHtmlBundle() {
 
 
 
+var activeMergedPdf = null;
+var pdfMergeError = false;
+var receivedPdfs = {};
+var nextPdfOrderIndex = 0;
+
+async function initPipelinedPdf() {
+  activeMergedPdf = null;
+  pdfMergeError = false;
+  receivedPdfs = {};
+  nextPdfOrderIndex = 0;
+  try {
+    if (typeof PDFLib !== 'undefined' && PDFLib.PDFDocument) {
+      activeMergedPdf = await PDFLib.PDFDocument.create();
+    }
+  } catch (e) {
+    pdfMergeError = true;
+  }
+}
+
+async function onPdfFileArrived(f) {
+  if (pdfMergeError || !activeMergedPdf) return;
+  receivedPdfs[f.id] = f.bytes;
+  await processPendingPdfs();
+}
+
+async function processPendingPdfs() {
+  if (pdfMergeError || !activeMergedPdf) return;
+  while (nextPdfOrderIndex < state.order.length) {
+    var id = state.order[nextPdfOrderIndex];
+    if (!receivedPdfs[id]) {
+      break;
+    }
+    var bytes = receivedPdfs[id];
+    delete receivedPdfs[id];
+    nextPdfOrderIndex++;
+    try {
+      var src = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true });
+      var pages = await activeMergedPdf.copyPages(src, src.getPageIndices());
+      for (var p = 0; p < pages.length; p++) {
+        activeMergedPdf.addPage(pages[p]);
+      }
+      src = null;
+    } catch (e) {
+      pdfMergeError = true;
+      break;
+    }
+    await new Promise(function (r) { setTimeout(r, 0); });
+  }
+}
+
 async function downloadSinglePdf() {
   // LIMITATION (stated plainly): Figma returns one single-page PDF per
   // frame. We merge those pages in selection order with pdf-lib. Vector
@@ -1718,20 +1918,14 @@ async function downloadSinglePdf() {
   // to parse we fall back to zipping the individual PDFs.
   var files = orderedFiles();
   try {
-    var merged = await PDFLib.PDFDocument.create();
-    for (var i = 0; i < files.length; i++) {
-      var src = await PDFLib.PDFDocument.load(files[i].bytes, { ignoreEncryption: true });
-      var pages = await merged.copyPages(src, src.getPageIndices());
-      pages.forEach(function (p) {
-        merged.addPage(p);
-      });
-      src = null;
-      if (i % 5 === 0) {
-        await new Promise(function (r) { setTimeout(r, 0); });
-      }
+    if (pdfMergeError || !activeMergedPdf) {
+      throw new Error('PDF merge assembly unavailable');
     }
-    var out = await merged.save();
+    await processPendingPdfs();
+    var out = await activeMergedPdf.save();
     download(new Blob([out], { type: 'application/pdf' }), 'frames.pdf');
+    activeMergedPdf = null;
+    receivedPdfs = {};
   } catch (err) {
     var zip = new JSZip();
     files.forEach(function (f) {
@@ -1743,6 +1937,8 @@ async function downloadSinglePdf() {
     li.textContent = 'Single-PDF merge unavailable; downloaded individual PDFs instead.';
     $('failList').appendChild(li);
     $('failBox').hidden = false;
+    activeMergedPdf = null;
+    receivedPdfs = {};
   }
 }
 
@@ -1767,6 +1963,12 @@ function resetRun() {
   state.files = [];
   state.fails = [];
   state.pendingFrames = null;
+  if (typeof resetPipelinedZip === 'function') resetPipelinedZip();
+  if (typeof activeMergedPdf !== 'undefined') {
+    activeMergedPdf = null;
+    receivedPdfs = {};
+    nextPdfOrderIndex = 0;
+  }
   var widget = $('exportWidget');
   if (widget) widget.className = 'export-widget';
   var pt = $('progressTitle');
@@ -1872,6 +2074,7 @@ window.addEventListener('message', function (e) {
 
 applyTheme();
 wire();
+if (typeof initThumbObserver === 'function') initThumbObserver();
 renderList();
 show('screenSelect');
 

@@ -20,54 +20,110 @@ function updateSelectionHeader() {
 
 function renderList() {
   var list = $('frameList');
+  if (!list) return;
+
+  var currentRows = {};
+  var existing = list.querySelectorAll('.row');
+  for (var e = 0; e < existing.length; e++) {
+    var rowId = existing[e].id.replace(/^row-/, '');
+    currentRows[rowId] = existing[e];
+  }
+
+  var activeIds = {};
   var frag = document.createDocumentFragment();
+
   state.frames.forEach(function (f) {
-    var lab = document.createElement('label');
-    lab.className = 'row';
-    lab.id = 'row-' + f.id;
-    var cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = !!state.checked[f.id];
-    cb.onchange = function () {
-      toggle(f.id, cb.checked);
-    };
+    activeIds[f.id] = true;
+    var lab = currentRows[f.id];
 
-    var th = document.createElement('div');
-    th.className = 'thumb';
-    th.id = 'th-' + f.id;
-    if (state.thumbs[f.id]) {
-      var img = document.createElement('img');
-      img.src = state.thumbs[f.id];
-      img.alt = '';
-      th.appendChild(img);
+    if (!lab) {
+      lab = document.createElement('label');
+      lab.className = 'row';
+      lab.id = 'row-' + f.id;
+
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = !!state.checked[f.id];
+      cb.onchange = function () {
+        toggle(f.id, cb.checked);
+      };
+
+      var th = document.createElement('div');
+      th.className = 'thumb';
+      th.id = 'th-' + f.id;
+      if (state.thumbs[f.id]) {
+        var img = document.createElement('img');
+        img.src = state.thumbs[f.id];
+        img.alt = '';
+        th.appendChild(img);
+      } else {
+        var icon = document.createElement('span');
+        icon.className = 'th-ph';
+        icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="11" height="11" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 9.5L4.5 6.5L8 10L10 8L12.5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        th.appendChild(icon);
+      }
+
+      var m = document.createElement('span');
+      m.className = 'm';
+      var n = document.createElement('span');
+      n.className = 'n';
+      n.textContent = f.name;
+      var s = document.createElement('span');
+      s.className = 's';
+      s.textContent = (f.page || '') + fmtWH(f);
+      m.appendChild(n);
+      m.appendChild(s);
+
+      var st = document.createElement('span');
+      st.className = 'st';
+      st.id = 'st-' + f.id;
+      st.textContent = state.checked[f.id] ? 'Selected' : '';
+
+      lab.appendChild(cb);
+      lab.appendChild(th);
+      lab.appendChild(m);
+      lab.appendChild(st);
+
+      frag.appendChild(lab);
+      observeRow(lab, f.id);
     } else {
-      var icon = document.createElement('span');
-      icon.className = 'th-ph';
-      icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="11" height="11" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 9.5L4.5 6.5L8 10L10 8L12.5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-      th.appendChild(icon);
+      var cbExisting = lab.querySelector('input[type="checkbox"]');
+      if (cbExisting && cbExisting.checked !== !!state.checked[f.id]) {
+        cbExisting.checked = !!state.checked[f.id];
+      }
+      var nExisting = lab.querySelector('.n');
+      if (nExisting && nExisting.textContent !== f.name) {
+        nExisting.textContent = f.name;
+      }
+      var sExisting = lab.querySelector('.s');
+      var sVal = (f.page || '') + fmtWH(f);
+      if (sExisting && sExisting.textContent !== sVal) {
+        sExisting.textContent = sVal;
+      }
+      var stExisting = document.getElementById('st-' + f.id);
+      if (stExisting) {
+        stExisting.textContent = state.checked[f.id] ? 'Selected' : '';
+      }
+      var thExisting = document.getElementById('th-' + f.id);
+      if (thExisting && state.thumbs[f.id] && !thExisting.querySelector('img')) {
+        thExisting.innerHTML = '';
+        var thImg = document.createElement('img');
+        thImg.src = state.thumbs[f.id];
+        thImg.alt = '';
+        thExisting.appendChild(thImg);
+      }
+      frag.appendChild(lab);
+      observeRow(lab, f.id);
     }
-
-    var m = document.createElement('span');
-    m.className = 'm';
-    var n = document.createElement('span');
-    n.className = 'n';
-    n.textContent = f.name;
-    var s = document.createElement('span');
-    s.className = 's';
-    s.textContent = (f.page || '') + fmtWH(f);
-    m.appendChild(n);
-    m.appendChild(s);
-    var st = document.createElement('span');
-    st.className = 'st';
-    st.id = 'st-' + f.id;
-    st.textContent = state.checked[f.id] ? 'Selected' : '';
-    lab.appendChild(cb);
-    lab.appendChild(th);
-    lab.appendChild(m);
-    lab.appendChild(st);
-    frag.appendChild(lab);
   });
-  list.innerHTML = '';
+
+  for (var rId in currentRows) {
+    if (!activeIds[rId]) {
+      if (thumbObserver) thumbObserver.unobserve(currentRows[rId]);
+      currentRows[rId].remove();
+    }
+  }
+
   list.appendChild(frag);
   updateSelectionHeader();
 }

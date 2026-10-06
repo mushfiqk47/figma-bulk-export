@@ -73,6 +73,22 @@ function orderedFiles() {
   return out;
 }
 
+var activeZip = null;
+
+function initPipelinedZip() {
+  activeZip = new JSZip();
+}
+
+function addFileToPipelinedZip(f) {
+  if (!activeZip) return;
+  var filename = (state.plan && state.plan[f.id]) || (f.name + '.' + ext());
+  activeZip.file(filename, f.bytes);
+}
+
+function resetPipelinedZip() {
+  activeZip = null;
+}
+
 function downloadOne() {
   var f = orderedFiles()[0];
   var plan = (state.plan && state.plan[f.id]) || null;
@@ -81,11 +97,13 @@ function downloadOne() {
 }
 
 async function downloadZip() {
-  var zip = new JSZip();
-  var files = orderedFiles();
-  files.forEach(function (f) {
-    zip.file((state.plan && state.plan[f.id]) || (f.name + '.' + ext()), f.bytes);
-  });
+  var zip = activeZip || new JSZip();
+  if (!activeZip) {
+    var files = orderedFiles();
+    files.forEach(function (f) {
+      zip.file((state.plan && state.plan[f.id]) || (f.name + '.' + ext()), f.bytes);
+    });
+  }
   var comp = (state.format === 'SVG') ? 'DEFLATE' : 'STORE';
   var blob = await zip.generateAsync({ type: 'blob', compression: comp }, function (meta) {
     if (meta && typeof meta.percent === 'number') {
@@ -95,6 +113,7 @@ async function downloadZip() {
     }
   });
   download(blob, 'velto-' + state.format.toLowerCase() + '-export.zip');
+  activeZip = null;
 }
 
 function escapeHtml(str) {
