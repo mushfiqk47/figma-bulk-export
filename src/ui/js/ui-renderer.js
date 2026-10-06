@@ -1,15 +1,16 @@
 function updateSelectionHeader() {
-  var empty = state.order.length === 0;
-  $('emptyState').hidden = !empty;
-  $('selTools').style.display = empty ? 'none' : 'flex';
+  var noFrames = state.frames.length === 0;
+  var noneChecked = state.order.length === 0;
+  $('emptyState').hidden = !noFrames;
+  $('selTools').style.display = noFrames ? 'none' : 'flex';
   $('countBadge').textContent = selCount() + ' selected';
-  $('subtitle').textContent = empty ? 'Nothing selected yet.' : 'Select frames on the canvas to export.';
-  $('btnContinue').disabled = selCount() === 0;
+  $('subtitle').textContent = noFrames ? 'Nothing selected yet.' : 'Select frames on the canvas to export.';
+  $('btnContinue').disabled = noneChecked;
   var sk = $('skipHint');
   if (sk) {
-    if (state.skipped > 0 && !empty) {
+    if (state.skipped > 0 && !noFrames) {
       sk.hidden = false;
-      sk.textContent = state.skipped + (state.skipped === 1 ? ' selected layer is not a frame and will be skipped.' : ' selected layers are not frames and will be skipped.');
+      sk.textContent = state.skipped + (state.skipped === 1 ? ' selected layer is not exportable and was skipped.' : ' selected layers are not exportable and were skipped.');
     } else {
       sk.hidden = true;
       sk.textContent = '';
@@ -115,8 +116,16 @@ function renderSettings() {
   var raster = state.format === 'PNG' || state.format === 'JPG';
   $('qualityGroup').hidden = !raster;
   $('pdfGroup').hidden = state.format !== 'PDF';
+  var hg = $('htmlGroup');
+  if (hg) hg.hidden = state.format !== 'HTML';
+
+  var hr = document.querySelectorAll('input[name="htmlmode"]');
+  for (var h = 0; h < hr.length; h++) {
+    hr[h].checked = hr[h].value === state.html;
+  }
+
   if (state.format === 'HTML') {
-    $('btnExport').textContent = 'Export 1 HTML file';
+    $('btnExport').textContent = state.html === 'bundle' ? 'Export Web Bundle (.zip)' : 'Export 1 HTML file';
   } else if (state.format === 'PDF' && state.pdf === 'single') {
     $('btnExport').textContent = 'Export 1 PDF';
   } else {

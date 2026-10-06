@@ -1,6 +1,34 @@
 figma.showUI(__html__, { width: 420, height: 440, themeColors: true });
 
-var EXPORTABLE = { FRAME: true, COMPONENT: true, COMPONENT_SET: true };
+var CONTAINER_TYPES = {
+  FRAME: true,
+  COMPONENT: true,
+  COMPONENT_SET: true,
+  INSTANCE: true,
+  SECTION: true,
+  GROUP: true
+};
+
+function getExportableNode(n) {
+  if (!n) return null;
+  // If node itself is an exportable frame/container type
+  if (CONTAINER_TYPES[n.type]) {
+    return n;
+  }
+  // If user selected a child layer inside a frame/container, climb up to find the enclosing frame
+  var curr = n.parent;
+  while (curr && curr.type !== 'PAGE' && curr.type !== 'DOCUMENT') {
+    if (CONTAINER_TYPES[curr.type]) {
+      return curr;
+    }
+    curr = curr.parent;
+  }
+  // Standalone vector/shape/layer capable of direct export
+  if (typeof n.exportAsync === 'function' && n.type !== 'PAGE' && n.type !== 'DOCUMENT') {
+    return n;
+  }
+  return null;
+}
 
 function canvasSelection() {
   try { return figma.currentPage.selection || []; } catch (e) { return []; }
@@ -8,17 +36,19 @@ function canvasSelection() {
 
 function selectedDetails() {
   var out = [];
+  var seen = {};
   var sel = canvasSelection();
   for (var i = 0; i < sel.length; i++) {
-    var n = sel[i];
-    if (n && EXPORTABLE[n.type]) {
+    var target = getExportableNode(sel[i]);
+    if (target && !seen[target.id]) {
+      seen[target.id] = true;
       var w = 0, h = 0;
-      try { w = Math.round(n.width || 0); h = Math.round(n.height || 0); } catch (e) {}
+      try { w = Math.round(target.width || 0); h = Math.round(target.height || 0); } catch (e) {}
       var pg = '';
-      try { pg = figma.currentPage.name; } catch (e) {}
+      try { pg = figma.currentPage ? figma.currentPage.name : ''; } catch (e) {}
       var nm = 'Untitled';
-      try { nm = String(n.name || 'Untitled'); } catch (e) {}
-      out.push({ id: n.id, name: nm, width: w, height: h, page: pg });
+      try { nm = String(target.name || 'Untitled'); } catch (e) {}
+      out.push({ id: target.id, name: nm, width: w, height: h, page: pg });
     }
   }
   return out;
@@ -158,4 +188,7 @@ figma.ui.onmessage = async function (msg) {
     postFrames();
   }
 };
+
+// Dispatch initial selection immediately on startup
+postFrames();
 

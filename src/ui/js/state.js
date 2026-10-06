@@ -18,6 +18,7 @@ var state = {
   format: 'PNG',
   scale: 2,
   pdf: 'single',
+  html: 'single',
   running: false,
   finished: false,
   expected: 0,

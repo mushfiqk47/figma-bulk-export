@@ -113,7 +113,8 @@ function startExport() {
     ids: state.order.slice(),
     format: state.format,
     scale: effScale(),
-    pdf: state.pdf
+    pdf: state.pdf,
+    html: state.html
   });
   if (!inFigma) {
     simulate();

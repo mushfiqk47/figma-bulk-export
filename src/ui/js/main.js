@@ -87,6 +87,15 @@ function wire() {
       renderSettings();
     };
   }
+
+  var hr = document.querySelectorAll('input[name="htmlmode"]');
+  for (var m = 0; m < hr.length; m++) {
+    hr[m].onchange = function () {
+      var c = document.querySelector('input[name="htmlmode"]:checked');
+      state.html = c ? c.value : 'single';
+      renderSettings();
+    };
+  }
 }
 
 function applyTheme() {
@@ -121,4 +130,14 @@ if (!inFigma) {
   applyFramesMsg({ selectedFrames: DEMO.slice(), selected: ['d1', 'd2'], skipped: 0 });
 } else {
   send({ type: 'ready' });
+  // Resilient handshake: retry ready ping until frames arrive or max 5 attempts
+  var pings = 0;
+  var readyTimer = setInterval(function () {
+    pings++;
+    if (state.frames.length > 0 || pings >= 5) {
+      clearInterval(readyTimer);
+      return;
+    }
+    send({ type: 'ready' });
+  }, 100);
 }

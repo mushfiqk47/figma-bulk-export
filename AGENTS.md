@@ -122,7 +122,7 @@ Uses `parent.postMessage({ pluginMessage: msg }, '*')`:
 * `{ type: 'ready' }`: Fired on UI boot to request current canvas selection details.
 * `{ type: 'clear' }`: Cancels ongoing thumbnail generation and resets canvas selection (`figma.currentPage.selection = []`).
 * `{ type: 'get-thumbnails', ids: string[] }`: Requests sequential thumbnail generation for specified node IDs.
-* `{ type: 'export', ids: string[], format: 'PNG'|'JPG'|'SVG'|'PDF'|'HTML', scale: number|'none', pdf: 'single'|'each' }`: Starts bulk export process for given IDs.
+* `{ type: 'export', ids: string[], format: 'PNG'|'JPG'|'SVG'|'PDF'|'HTML', scale: number|'none', pdf: 'single'|'each', html: 'single'|'bundle' }`: Starts bulk export process for given IDs.
 
 #### Sandbox Thread to UI Thread (`figma.ui.postMessage(msg)`)
 Listened via `window.addEventListener('message', (e) => { ... })`:
@@ -139,7 +139,7 @@ Listened via `window.addEventListener('message', (e) => { ... })`:
 ## 4. Key Subsystems & Implementation Details
 
 ### 4.1 Exportable Layer Filter
-Only nodes matching `EXPORTABLE = { FRAME: true, COMPONENT: true, COMPONENT_SET: true }` are processed. Raw shapes, groups, and text layers are excluded from individual row rendering, and counted under `skipped` so the user is informed without errors.
+Nodes matching `CONTAINER_TYPES = { FRAME: true, COMPONENT: true, COMPONENT_SET: true, INSTANCE: true, SECTION: true, GROUP: true }` are processed directly. If a user selects a child layer (e.g. text or shape) inside a frame/container, the plugin traverses parent nodes to find and export the enclosing frame. Standalone exportable vector/graphic nodes are also supported. Non-exportable selections are counted under `skipped`.
 
 ### 4.2 Dynamic Page Constraint
 The manifest sets `"documentAccess": "dynamic-page"`.

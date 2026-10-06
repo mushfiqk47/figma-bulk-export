@@ -24,8 +24,11 @@ async function onDone() {
   $('statusLine').textContent = 'Preparing download…';
   try {
     var singlePdf = state.format === 'PDF' && state.pdf === 'single';
+    var htmlBundle = state.format === 'HTML' && state.html === 'bundle';
     if (singlePdf) {
       await downloadSinglePdf();
+    } else if (htmlBundle) {
+      await downloadHtmlBundle();
     } else if (state.files.length === 1) {
       downloadOne();
     } else {
@@ -145,3 +148,76 @@ function download(blob, name) {
     a.remove();
   }, 1000);
 }
+
+async function downloadHtmlBundle() {
+  var f = orderedFiles()[0];
+  var svgText = '';
+  try {
+    svgText = new TextDecoder('utf-8').decode(f.bytes);
+  } catch (e) {
+    svgText = String.fromCharCode.apply(null, f.bytes);
+  }
+
+  var assets = [];
+  var assetIndex = 1;
+
+  var processedSvg = svgText.replace(
+    /(?:xlink:)?href="data:image\/(png|jpeg|jpg|webp|gif);base64,([A-Za-z0-9+/=\s]+)"/g,
+    function (match, mimeExt, b64Data) {
+      var ext = mimeExt === 'jpeg' ? 'jpg' : mimeExt;
+      var assetFilename = 'assets/image-' + assetIndex + '.' + ext;
+      assetIndex++;
+      try {
+        var rawBase64 = b64Data.replace(/\s+/g, '');
+        var binaryString = atob(rawBase64);
+        var len = binaryString.length;
+        var u8 = new Uint8Array(len);
+        for (var b = 0; b < len; b++) {
+          u8[b] = binaryString.charCodeAt(b);
+        }
+        assets.push({ path: assetFilename, bytes: u8 });
+        return 'href="' + assetFilename + '" xlink:href="' + assetFilename + '"';
+      } catch (err) {
+        return match;
+      }
+    }
+  );
+
+  var title = escapeHtml(f.name || 'Frame');
+  var cssContent = '/* Velto Web Project Styles */\n'
+    + '* {\n  box-sizing: border-box;\n}\n\n'
+    + 'html,\nbody {\n  margin: 0;\n  padding: 0;\n  min-height: 100vh;\n  background: #ffffff;\n'
+    + '  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;\n}\n\n'
+    + '.frame-wrapper {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  min-height: 100vh;\n  padding: 24px;\n}\n\n'
+    + 'svg {\n  display: block;\n  max-width: 100%;\n  height: auto;\n}\n';
+
+  var jsContent = '// Velto Web Project Script\n'
+    + 'document.addEventListener(\'DOMContentLoaded\', function () {\n'
+    + '  console.log(\'Velto project loaded: ' + title + '\');\n'
+    + '});\n';
+
+  var htmlDoc = '<!DOCTYPE html>\n'
+    + '<html lang="en">\n<head>\n'
+    + '<meta charset="utf-8">\n'
+    + '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+    + '<title>' + title + '</title>\n'
+    + '<link rel="stylesheet" href="css/style.css">\n'
+    + '</head>\n<body>\n'
+    + '<div class="frame-wrapper">\n'
+    + processedSvg + '\n'
+    + '</div>\n'
+    + '<' + 'script src="js/main.js"><' + '/script>\n'
+    + '</body>\n</html>\n';
+
+  var zip = new JSZip();
+  zip.file('index.html', htmlDoc);
+  zip.file('css/style.css', cssContent);
+  zip.file('js/main.js', jsContent);
+  assets.forEach(function (a) {
+    zip.file(a.path, a.bytes);
+  });
+
+  var blob = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
+  download(blob, sanitize(f.name) + '-web.zip');
+}
+

@@ -83,7 +83,9 @@ The script inlines the modular HTML, CSS, JavaScript parts, and vendor libraries
 
 - **Live Previews**: Selected frames render miniature visual thumbnails in the list via lazy viewport loading.
 - **Canvas Selection Tracking**: The list mirrors your canvas selection only. Non-frame layers are counted and skipped with one hint line.
-- **Single-Frame HTML Export**: When exactly 1 frame is selected, an **HTML** format button appears in the format picker. It exports the frame as a self-contained, responsive HTML5 file (`.html`) with 1:1 vector precision and outlined text, requiring zero external web fonts, CDNs, or network requests.
+- **Single-Frame HTML Export Modes**: When exactly 1 frame is selected, an **HTML** format button appears with two packaging options:
+  - *Single file (.html)*: Exports a self-contained, responsive HTML5 file with 1:1 vector precision and outlined text—zero external fonts, CDNs, or network requests.
+  - *Web bundle (.zip)*: Packages a clean developer web project containing `index.html`, `css/style.css`, `js/main.js`, and an `assets/` folder with all extracted media files.
 - **Raster Scaling**: PNG and JPG support None, 0.5x, 1x, 2x, 3x, and 4x. SVG, PDF, and HTML ignore scale.
 - **Side-by-side PDF Options**:
   - *One PDF for all frames*: Figma returns single-page PDFs per frame and merges them into one `frames.pdf` in selection order with pdf-lib. If a vector page fails to parse, it falls back to zipping individual PDFs safely.

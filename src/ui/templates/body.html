@@ -63,6 +63,25 @@
           </label>
         </div>
       </div>
+      <div class="g" id="htmlGroup" hidden>
+        <h2>HTML mode</h2>
+        <div class="pdf-grid">
+          <label class="radio">
+            <input type="radio" name="htmlmode" value="single" checked>
+            <span>
+              <b>Single file (.html)</b><br>
+              <span style="color:var(--ink2)">Self-contained, portable, zero dependencies.</span>
+            </span>
+          </label>
+          <label class="radio">
+            <input type="radio" name="htmlmode" value="bundle">
+            <span>
+              <b>Web bundle (.zip)</b><br>
+              <span style="color:var(--ink2)">index.html, css/, js/ and assets/ folder.</span>
+            </span>
+          </label>
+        </div>
+      </div>
       <div class="g" id="qualityGroup">
         <h2>Scale</h2>
         <p class="hint" id="qualityHint" style="margin:0 0 8px">Scale applies to PNG and JPG only.</p>
