@@ -4,57 +4,112 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bulk export</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#fff;--bg2:#f5f5f5;--ink:#000;--ink2:rgba(0,0,0,.62);--ink3:rgba(0,0,0,.42);--line:rgba(0,0,0,.12);--accent:#0d99ff;--danger:#e5484d;--ok:#2f9e44;--r:8px}
-html.figma-dark,body.figma-dark{--bg:#2c2c2c;--bg2:#383838;--ink:#fff;--ink2:rgba(255,255,255,.74);--ink3:rgba(255,255,255,.46);--line:rgba(255,255,255,.16)}
-*{box-sizing:border-box}[hidden]{display:none !important}html,body{height:100%}
-body{margin:0;font:12px/1.5 Inter,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--figma-color-bg,var(--bg));color:var(--figma-color-text,var(--ink))}
-.app{display:flex;flex-direction:column;height:100vh}
-.top{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--figma-color-border,var(--line))}
+:root{
+  --bg:#f3eee7;
+  --bg2:#ffffff;
+  --ink:#313131;
+  --ink2:#585858;
+  --ink3:#aaa6a3;
+  --line:#313131;
+  --accent:#313131;
+  --danger:#8a2529;
+  --ok:#313131;
+  --r:8px;
+  --r-sm:6px;
+  --r-pill:99px;
+  --font-base:"Sora",-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+html.figma-dark,body.figma-dark{
+  --bg:#202020;
+  --bg2:#282828;
+  --ink:#f3eee7;
+  --ink2:#aaa6a3;
+  --ink3:#6b6764;
+  --line:#585858;
+  --accent:#f3eee7;
+  --danger:#e57373;
+  --ok:#f3eee7;
+  --r:8px;
+  --r-sm:6px;
+  --r-pill:99px;
+}
+*{box-sizing:border-box}[hidden]{display:none !important}html,body{height:100%;overflow-x:hidden}
+body{margin:0;font-family:var(--font-base);font-size:12px;line-height:1.45;letter-spacing:0.2px;font-weight:400;background:var(--bg);color:var(--ink)}
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--bg)}
 .top-left{display:flex;align-items:center;gap:10px;min-width:0}
-.back-btn{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;background:none;border:1px solid var(--figma-color-border,var(--line));border-radius:6px;color:var(--figma-color-text,var(--ink));cursor:pointer;flex:none}
-.back-btn:hover{background:var(--figma-color-bg-hover,var(--bg2))}
-.top h1{margin:0;font-size:13px;font-weight:600}.top p{margin:2px 0 0;color:var(--figma-color-text-secondary,var(--ink2))}
-.badge{white-space:nowrap;font-size:11px;padding:2px 8px;border-radius:99px;background:var(--figma-color-bg-secondary,var(--bg2));color:var(--figma-color-text-secondary,var(--ink2));border:1px solid var(--figma-color-border,var(--line))}
-main{flex:1;overflow-y:auto;padding:12px 16px}
-.tools{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-.link{background:none;border:0;padding:2px 0;color:var(--figma-color-text-brand,var(--accent));font:inherit;cursor:pointer}
-.list{display:flex;flex-direction:column;gap:6px}
-.row{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--figma-color-border,var(--line));border-radius:var(--r);cursor:pointer;background:var(--figma-color-bg,var(--bg))}
-.row input{accent-color:var(--accent);width:14px;height:14px;margin:0}
-.row .m{min-width:0;flex:1}.row .n{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
-.row .s{display:block;color:var(--figma-color-text-tertiary,var(--ink3));font-size:11px}
-.row .st{font-size:11px;color:var(--ink3);flex:none}.row.done .st{color:var(--ok)}.row.fail .st{color:var(--danger)}
-.empty{padding:28px 12px;text-align:center;color:var(--figma-color-text-secondary,var(--ink2));border:1px dashed var(--figma-color-border-strong,var(--ink3));border-radius:var(--r)}
-.g{margin:0 0 16px}.g>h2{margin:0 0 8px;font-size:11px;font-weight:600;color:var(--figma-color-text-secondary,var(--ink2))}
-.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.seg button,.scl button{border:1px solid var(--figma-color-border,var(--line));background:var(--figma-color-bg,var(--bg));color:inherit;font:inherit;padding:7px 0;border-radius:6px;cursor:pointer}
-.seg button[aria-pressed="true"],.scl button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);font-weight:600}
-.swrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--figma-color-border,var(--line));border-radius:var(--r)}
-.sw{position:relative;width:32px;height:18px;flex:none;border-radius:99px;border:0;background:var(--ink3);cursor:pointer;padding:0}
-.sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff}
-.sw[aria-checked="true"]{background:var(--accent)}.sw[aria-checked="true"]::after{left:16px}
-.hint{margin:6px 0 0;font-size:11px;color:var(--figma-color-text-tertiary,var(--ink3))}
-.scl{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.scl button:disabled{opacity:.4;cursor:default}
-.radio{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--figma-color-border,var(--line));border-radius:var(--r);margin-bottom:6px;cursor:pointer}
-.radio input{accent-color:var(--accent);margin:2px 0 0}
-.manifest{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--figma-color-text-secondary,var(--ink2))}
-.manifest li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bar{height:8px;border-radius:99px;background:var(--figma-color-bg-secondary,var(--bg2));border:1px solid var(--figma-color-border,var(--line));overflow:hidden}
-.bar>i{display:block;height:100%;width:0;background:var(--accent)}
-.status{margin:8px 0 12px;color:var(--figma-color-text-secondary,var(--ink2))}
-.failbox{margin-top:12px;padding:10px;border:1px solid var(--danger);border-radius:var(--r)}
-.failbox h3{margin:0 0 6px;font-size:12px;color:var(--danger)}.failbox ul{margin:0;padding-left:18px}
-footer{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--figma-color-border,var(--line))}
-.btn{flex:1;font:inherit;font-weight:500;padding:9px 12px;border-radius:6px;cursor:pointer;border:1px solid var(--figma-color-border,var(--line));background:var(--figma-color-bg,var(--bg));color:inherit}
-.btn.primary{background:var(--figma-color-bg-brand,var(--accent));border-color:transparent;color:#fff}
-.btn:disabled{opacity:.45;cursor:default}.btn.secondary{flex:0 0 auto;padding-left:16px;padding-right:16px}
-@media (prefers-color-scheme:dark){:root:not(.figma-light):not(.figma-dark){--bg:#2c2c2c;--bg2:#383838;--ink:#fff;--ink2:rgba(255,255,255,.74);--ink3:rgba(255,255,255,.46);--line:rgba(255,255,255,.16)}}
+.logo-mark{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex:none}
+.logo-mark svg{display:block;width:30px;height:30px}
+.back-btn{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;background:none;border:1px solid var(--line);border-radius:var(--r-sm);color:var(--ink);cursor:pointer;flex:none}
+.back-btn:hover{background:rgba(49,49,49,.06)}
+.top h1{margin:0;font-family:var(--font-base);font-size:13.5px;font-weight:600;letter-spacing:0.2px;display:flex;align-items:center;gap:6px;line-height:1.2}
+.top p{margin:2px 0 0;font-family:var(--font-base);font-size:10.5px;letter-spacing:0.1px;color:var(--ink2)}
+.badge{white-space:nowrap;font-family:var(--font-base);font-size:9.5px;letter-spacing:1px;text-transform:uppercase;padding:3px 9px;border-radius:var(--r-pill);background:transparent;color:var(--ink2);border:1px solid var(--line)}
+main{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px;scrollbar-width:none;-ms-overflow-style:none}
+main::-webkit-scrollbar{width:0;height:0;display:none}
+.tools{display:flex;gap:8px;align-items:center;margin-bottom:12px;font-size:11px;letter-spacing:0.5px}
+.link{background:none;border:0;padding:2px 0;color:var(--ink);font-family:var(--font-base);font-size:11px;letter-spacing:0.5px;text-transform:uppercase;cursor:pointer;text-decoration:underline}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);cursor:pointer;background:var(--bg2)}
+.row input{accent-color:var(--ink);width:14px;height:14px;margin:0;border-radius:3px;flex:none}
+.thumb{width:36px;height:36px;flex:none;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.th-ph{display:flex;align-items:center;justify-content:center;color:var(--ink3)}
+.row .m{min-width:0;flex:1}
+.row .n{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-base);font-size:12.5px;font-weight:500;letter-spacing:0.1px}
+.row .s{display:block;color:var(--ink2);font-family:var(--font-base);font-size:10.5px;letter-spacing:0.1px;margin-top:2px}
+.row .st{font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--ink2);flex:none}
+.row.done .st{color:var(--ok)}.row.fail .st{color:var(--danger)}
+.empty{padding:32px 14px;text-align:center;color:var(--ink2);border:1px solid var(--line);border-radius:var(--r);font-family:var(--font-base);font-size:12px;letter-spacing:0.2px}
+.g{margin:0 0 20px}
+.g>h2{margin:0 0 10px;font-family:var(--font-base);font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink2)}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.seg button,.scl button{border:1px solid var(--line);background:var(--bg2);color:var(--ink);font-family:var(--font-base);font-size:11.5px;letter-spacing:0.4px;padding:9px 0;border-radius:var(--r-sm);cursor:pointer;transition:none}
+.seg button[aria-pressed="true"],.scl button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg);font-weight:500}
+.swrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg2)}
+.sw{position:relative;width:34px;height:18px;flex:none;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--bg);cursor:pointer;padding:0}
+.sw::after{content:"";position:absolute;top:1px;left:1px;width:14px;height:14px;border-radius:var(--r-pill);background:var(--ink)}
+.sw[aria-checked="true"]{background:var(--ink)}
+.sw[aria-checked="true"]::after{left:17px;background:var(--bg)}
+.hint{margin:8px 0 0;font-size:11px;letter-spacing:0.2px;color:var(--ink2)}
+.scl{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.scl button{padding:8px 0;font-size:11px;border-radius:var(--r-sm)}
+.scl button:disabled{opacity:.35;cursor:default}
+.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.radio{display:flex;gap:8px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg2)}
+.radio:has(input:checked){border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.radio input{accent-color:var(--ink);margin:2px 0 0;flex:none}
+.radio span{display:block;min-width:0}
+.radio b{display:block;font-family:var(--font-base);font-size:12px;font-weight:600;margin-bottom:3px;color:var(--ink);letter-spacing:0.1px}
+.manifest{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:11px;color:var(--ink2)}
+.manifest li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:4px 0;border-bottom:1px solid rgba(49,49,49,.1)}
+.bar{height:6px;border-radius:var(--r-pill);background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:var(--ink)}
+.status{margin:10px 0 14px;font-family:var(--font-base);font-size:13px;font-weight:500;color:var(--ink);letter-spacing:0.2px}
+.failbox{margin-top:14px;padding:12px;border:1px solid var(--danger);border-radius:var(--r);background:var(--bg2)}
+.failbox h3{margin:0 0 6px;font-size:11.5px;font-weight:600;color:var(--danger);letter-spacing:1px;text-transform:uppercase}
+.failbox ul{margin:0;padding-left:18px}
+.row:hover{border-color:var(--ink)}
+.row:focus-within{outline:2px solid var(--accent);outline-offset:1px}
+.seg button:hover,.scl button:not(:disabled):hover{border-color:var(--ink)}
+.seg button:focus-visible,.scl button:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.radio:hover{border-color:var(--ink)}
+.btn:not(:disabled):hover{background:var(--line);color:var(--bg)}
+.btn.primary:not(:disabled):hover{opacity:.92}
+footer{display:flex;gap:8px;padding:14px 16px;border-top:1px solid var(--line);background:var(--bg)}
+.btn{flex:1;font-family:var(--font-base);font-size:12.5px;font-weight:500;letter-spacing:0.4px;padding:11px 15px;height:40px;border-radius:var(--r-sm);cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--ink);transition:background .15s ease,border-color .15s ease,opacity .15s ease}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.btn:disabled{opacity:.35;cursor:default}
+.btn.secondary{flex:0 0 auto;padding-left:16px;padding-right:16px}
 </style>
 </head>
 <body>
 <div class="app">
-<header class="top"><div class="top-left"><button type="button" class="back-btn" id="btnNavBack" aria-label="Back to selection" title="Back" hidden><svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.5 2.5L4 6L7.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div><h1>Bulk export</h1><p id="subtitle">Select frames on the canvas to export.</p></div></div><span class="badge" id="countBadge">0 selected</span></header>
+<header class="top"><div class="top-left"><button type="button" class="back-btn" id="btnNavBack" aria-label="Back to selection" title="Back" hidden><svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.5 2.5L4 6L7.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="logo-mark" id="brandLogo" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M288 64H117.333C87.8781 64 64 87.8781 64 117.333V288C64 317.455 87.8781 341.333 117.333 341.333H288C317.455 341.333 341.333 317.455 341.333 288V117.333C341.333 87.8781 317.455 64 288 64Z" fill="#D9D9D9"/><path d="M358 117H187.333C157.878 117 134 140.878 134 170.333V341C134 370.455 157.878 394.333 187.333 394.333H358C387.455 394.333 411.333 370.455 411.333 341V170.333C411.333 140.878 387.455 117 358 117Z" fill="#FF4B00"/><path d="M189 281L285 185M285 259.667V185H210.333" stroke="white" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><h1>Bulk export</h1><p id="subtitle">Select frames on the canvas to export.</p></div></div><span class="badge" id="countBadge">0 selected</span></header>
 <main>
 <section id="screenSelect">
 <div class="tools" id="selTools"><span id="selNote" style="color:var(--ink2)">Showing the canvas selection only.</span><span style="flex:1"></span><button class="link" id="selNone">Clear</button></div>
@@ -66,22 +121,21 @@ footer{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--figma-c
 <div class="g"><h2>File type</h2><div class="seg" id="fmtSeg">
 <button data-fmt="PNG" aria-pressed="true">PNG</button><button data-fmt="JPG" aria-pressed="false">JPG</button><button data-fmt="SVG" aria-pressed="false">SVG</button><button data-fmt="PDF" aria-pressed="false">PDF</button>
 </div></div>
-<div class="g" id="qualityGroup"><h2>Quality</h2>
-<div class="swrow"><span>High quality</span><button class="sw" id="qualitySw" aria-checked="true" aria-label="High quality"></button></div>
-<p class="hint" id="qualityHint">Scale applies to PNG and JPG only.</p>
-<div class="scl" id="scaleRow" style="margin-top:8px">
-<button data-scale="0.5" aria-pressed="false">0.5x</button><button data-scale="1" aria-pressed="false">1x</button><button data-scale="2" aria-pressed="true">2x</button><button data-scale="3" aria-pressed="false">3x</button><button data-scale="4" aria-pressed="false">4x</button>
-</div></div>
 <div class="g" id="pdfGroup" hidden><h2>PDF mode</h2>
+<div class="pdf-grid">
 <label class="radio"><input type="radio" name="pdfmode" value="single" checked><span><b>One PDF for all frames</b><br><span style="color:var(--ink2)">Frames become pages in selection order.</span></span></label>
 <label class="radio"><input type="radio" name="pdfmode" value="each"><span><b>One PDF per frame</b><br><span style="color:var(--ink2)">Each frame downloads as its own file.</span></span></label>
 </div>
-<div class="g"><h2>Files</h2><ul class="manifest" id="manifest"></ul></div>
+</div>
+<div class="g" id="qualityGroup"><h2>Scale</h2>
+<p class="hint" id="qualityHint" style="margin:0 0 8px">Scale applies to PNG and JPG only.</p>
+<div class="scl" id="scaleRow">
+<button data-scale="none" aria-pressed="false">None</button><button data-scale="0.5" aria-pressed="false">0.5x</button><button data-scale="1" aria-pressed="false">1x</button><button data-scale="2" aria-pressed="true">2x</button><button data-scale="3" aria-pressed="false">3x</button><button data-scale="4" aria-pressed="false">4x</button>
+</div></div>
 </section>
 <section id="screenProgress" hidden>
 <div class="bar"><i id="barFill"></i></div>
 <p class="status" id="statusLine">Exporting…</p>
-<ul class="manifest" id="doneList"></ul>
 <div class="failbox" id="failBox" hidden><h3>Some frames failed</h3><ul id="failList"></ul></div>
 </section>
 </main>
@@ -130,17 +184,26 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 var inFigma = typeof parent !== 'undefined' && parent !== window;
 function send(m){ try{ parent.postMessage({ pluginMessage: m }, '*'); }catch(e){} }
 var $ = function(id){ return document.getElementById(id); };
-var state = { frames: [], checked: {}, order: [], format: 'PNG', hq: true, scale: 2, pdf: 'single',
+var state = { frames: [], checked: {}, order: [], thumbs: {}, format: 'PNG', hq: true, scale: 2, pdf: 'single',
   running: false, finished: false, expected: 0, got: 0, files: [], fails: [], skipped: 0, pendingFrames: null };
 var DEMO = [ { id: 'd1', name: 'Landing hero', width: 1440, height: 900, page: 'Page 1' },
   { id: 'd2', name: 'Pricing cards', width: 1200, height: 800, page: 'Page 1' },
   { id: 'd3', name: 'Mobile / home', width: 390, height: 844, page: 'Page 1' } ];
 function fmtWH(f){ return (f.width && f.height) ? (' · ' + f.width + ' × ' + f.height) : ''; }
 function selCount(){ return state.order.length; }
-function effScale(){ if (state.format !== 'PNG' && state.format !== 'JPG') return 1; return state.hq ? state.scale : 1; }
+function effScale(){
+  if (state.format !== 'PNG' && state.format !== 'JPG') return 1;
+  if (state.scale === 'none') return 1;
+  return Number(state.scale) || 1;
+}
 function ext(){ return state.format === 'JPG' ? 'jpg' : state.format === 'PNG' ? 'png' : state.format === 'SVG' ? 'svg' : 'pdf'; }
 function sanitize(n){ var s = String(n || 'Untitled').trim() || 'Untitled'; s = s.replace(/[\\/:*?"<>|]/g, '-'); s = s.replace(/\s+/g, ' ').trim(); return s.slice(0, 100) || 'Untitled'; }
-function suffix(){ var s = effScale(); return (state.format === 'PNG' || state.format === 'JPG') && s !== 1 ? ('@' + s + 'x') : ''; }
+function suffix(){
+  if (state.format !== 'PNG' && state.format !== 'JPG') return '';
+  if (state.scale === 'none') return '';
+  var s = effScale();
+  return s !== 1 ? ('@' + s + 'x') : '';
+}
 function planFiles(){ var used = {}; var out = [];
   for (var i = 0; i < state.order.length; i++){ var id = state.order[i];
     var f = null; for (var k = 0; k < state.frames.length; k++){ if (state.frames[k].id === id){ f = state.frames[k]; break; } }
@@ -154,12 +217,23 @@ function renderList(){
     var lab = document.createElement('label'); lab.className = 'row';
     var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!state.checked[f.id];
     cb.onchange = function(){ toggle(f.id, cb.checked); };
+    
+    var th = document.createElement('div'); th.className = 'thumb'; th.id = 'th-' + f.id;
+    if (state.thumbs[f.id]){
+      var img = document.createElement('img'); img.src = state.thumbs[f.id]; img.alt = '';
+      th.appendChild(img);
+    } else {
+      var icon = document.createElement('span'); icon.className = 'th-ph';
+      icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="11" height="11" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 9.5L4.5 6.5L8 10L10 8L12.5 10.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      th.appendChild(icon);
+    }
+
     var m = document.createElement('span'); m.className = 'm';
     var n = document.createElement('span'); n.className = 'n'; n.textContent = f.name;
     var s = document.createElement('span'); s.className = 's'; s.textContent = (f.page || '') + fmtWH(f);
     m.appendChild(n); m.appendChild(s);
     var st = document.createElement('span'); st.className = 'st'; st.id = 'st-' + f.id; st.textContent = state.checked[f.id] ? 'Selected' : '';
-    lab.appendChild(cb); lab.appendChild(m); lab.appendChild(st); list.appendChild(lab);
+    lab.appendChild(cb); lab.appendChild(th); lab.appendChild(m); lab.appendChild(st); list.appendChild(lab);
   });
   var empty = state.order.length === 0;
   $('emptyState').hidden = !empty; $('selTools').style.display = empty ? 'none' : 'flex';
@@ -183,15 +257,17 @@ function applySelected(ids){
 function renderSettings(){
   var btns = document.querySelectorAll('#fmtSeg button');
   for (var i = 0; i < btns.length; i++){ btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-fmt') === state.format ? 'true' : 'false'); }
-  $('qualitySw').setAttribute('aria-checked', state.hq ? 'true' : 'false');
   var sb = document.querySelectorAll('#scaleRow button');
-  for (var j = 0; j < sb.length; j++){ var v = parseFloat(sb[j].getAttribute('data-scale')); sb[j].setAttribute('aria-pressed', v === state.scale ? 'true' : 'false'); sb[j].disabled = !state.hq; }
+  for (var j = 0; j < sb.length; j++){
+    var attr = sb[j].getAttribute('data-scale');
+    var isSel = (attr === 'none' && state.scale === 'none') || (parseFloat(attr) === state.scale);
+    sb[j].setAttribute('aria-pressed', isSel ? 'true' : 'false');
+  }
   var raster = state.format === 'PNG' || state.format === 'JPG';
-  $('scaleRow').style.opacity = (!raster || !state.hq) ? '.45' : '1';
-  $('qualityHint').textContent = raster ? (state.hq ? 'Scale applies to PNG and JPG only.' : 'Quality off: exports at 1x.') : 'SVG and PDF ignore scale.';
+  $('qualityGroup').hidden = !raster;
   $('pdfGroup').hidden = state.format !== 'PDF';
-  var man = $('manifest'); man.innerHTML = '';
-  planFiles().forEach(function(p){ var li = document.createElement('li'); li.textContent = p.file; man.appendChild(li); });
+  var man = $('manifest');
+  if (man){ man.innerHTML = ''; planFiles().forEach(function(p){ var li = document.createElement('li'); li.textContent = p.file; man.appendChild(li); }); }
   $('btnExport').textContent = state.format === 'PDF' && state.pdf === 'single' ? 'Export 1 PDF' : 'Export ' + selCount() + (selCount() === 1 ? ' file' : ' files');
   $('btnExport').disabled = selCount() === 0;
 }
@@ -202,10 +278,13 @@ function show(which){
   $('footDone').hidden = which !== 'screenProgress';
   var nb = $('btnNavBack');
   if (nb) nb.hidden = which !== 'screenSettings';
+  var logo = $('brandLogo');
+  if (logo) logo.hidden = which === 'screenSettings';
 }
 function resetRun(){ state.running = false; state.finished = false; state.expected = 0; state.got = 0; state.files = []; state.fails = []; state.pendingFrames = null;
   $('barFill').style.width = '0'; $('statusLine').textContent = 'Exporting…';
-  $('doneList').innerHTML = ''; $('failBox').hidden = true; $('failList').innerHTML = ''; }
+  var dl = $('doneList'); if (dl) dl.innerHTML = '';
+  $('failBox').hidden = true; $('failList').innerHTML = ''; }
 function download(blob, name){
   var url = URL.createObjectURL(blob); var a = document.createElement('a');
   a.href = url; a.download = name; document.body.appendChild(a); a.click();
@@ -233,6 +312,29 @@ function applyFramesMsg(msg){
   list.forEach(function(f){ if (!keepChecked[f.id]){ keepChecked[f.id] = true; keepOrder.push(f.id); } });
   state.checked = keepChecked; state.order = keepOrder;
   renderList();
+
+  // Request thumbnail previews for frames that don't have one cached yet
+  var needThumbs = [];
+  list.forEach(function(f){ if (!state.thumbs[f.id]) needThumbs.push(f.id); });
+  if (needThumbs.length > 0 && inFigma){
+    send({ type: 'get-thumbnails', ids: needThumbs });
+  }
+}
+function onThumbnail(msg){
+  if (!msg || !msg.id || !msg.bytes) return;
+  try {
+    var blob = new Blob([msg.bytes], { type: 'image/png' });
+    var url = URL.createObjectURL(blob);
+    state.thumbs[msg.id] = url;
+    var el = $('th-' + msg.id);
+    if (el){
+      el.innerHTML = '';
+      var img = document.createElement('img');
+      img.src = url;
+      img.alt = '';
+      el.appendChild(img);
+    }
+  } catch(e){}
 }
 function onFrames(msg){
   // Never yank the list mid-run or after finishing: the export screens own
@@ -271,8 +373,12 @@ function onFile(msg){
   state.files.push({ id: msg.id, name: msg.name || 'Untitled', bytes: u8 });
   state.got++;
   $('barFill').style.width = Math.round((state.got / Math.max(1, state.expected)) * 100) + '%';
-  var li = document.createElement('li'); li.textContent = (state.plan && state.plan[msg.id]) || (msg.name || 'file');
-  $('doneList').appendChild(li);
+  var dl = $('doneList');
+  if (dl){
+    var li = document.createElement('li');
+    li.textContent = (state.plan && state.plan[msg.id]) || (msg.name || 'file');
+    dl.appendChild(li);
+  }
   var badge = document.getElementById('st-' + CSS.escape(String(msg.id)));
   if (badge){ badge.textContent = 'Done'; badge.parentElement.classList.add('done'); }
   setStatus();
@@ -286,6 +392,7 @@ function onErr(msg){
 window.addEventListener('message', function(e){
   var m = e.data && e.data.pluginMessage; if (!m) return;
   if (m.type === 'frames') onFrames(m);
+  else if (m.type === 'thumbnail') onThumbnail(m);
   else if (m.type === 'file') onFile(m);
   else if (m.type === 'error') onErr(m);
   else if (m.type === 'done') onDone();
@@ -371,9 +478,16 @@ function wire(){
   $('btnExport').onclick = startExport;
   var fb = document.querySelectorAll('#fmtSeg button');
   for (var i = 0; i < fb.length; i++){ (function(b){ b.onclick = function(){ state.format = b.getAttribute('data-fmt'); renderSettings(); }; })(fb[i]); }
-  $('qualitySw').onclick = function(){ state.hq = !state.hq; renderSettings(); };
   var sb = document.querySelectorAll('#scaleRow button');
-  for (var j = 0; j < sb.length; j++){ (function(b){ b.onclick = function(){ if (b.disabled) return; state.scale = parseFloat(b.getAttribute('data-scale')); renderSettings(); }; })(sb[j]); }
+  for (var j = 0; j < sb.length; j++){
+    (function(b){
+      b.onclick = function(){
+        var sc = b.getAttribute('data-scale');
+        state.scale = (sc === 'none') ? 'none' : parseFloat(sc);
+        renderSettings();
+      };
+    })(sb[j]);
+  }
   var pr = document.querySelectorAll('input[name="pdfmode"]');
   for (var k = 0; k < pr.length; k++){ pr[k].onchange = function(){ var c = document.querySelector('input[name="pdfmode"]:checked'); state.pdf = c ? c.value : 'single'; renderSettings(); }; }
 }

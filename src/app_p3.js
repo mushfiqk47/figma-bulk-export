@@ -19,6 +19,29 @@ function applyFramesMsg(msg){
   list.forEach(function(f){ if (!keepChecked[f.id]){ keepChecked[f.id] = true; keepOrder.push(f.id); } });
   state.checked = keepChecked; state.order = keepOrder;
   renderList();
+
+  // Request thumbnail previews for frames that don't have one cached yet
+  var needThumbs = [];
+  list.forEach(function(f){ if (!state.thumbs[f.id]) needThumbs.push(f.id); });
+  if (needThumbs.length > 0 && inFigma){
+    send({ type: 'get-thumbnails', ids: needThumbs });
+  }
+}
+function onThumbnail(msg){
+  if (!msg || !msg.id || !msg.bytes) return;
+  try {
+    var blob = new Blob([msg.bytes], { type: 'image/png' });
+    var url = URL.createObjectURL(blob);
+    state.thumbs[msg.id] = url;
+    var el = $('th-' + msg.id);
+    if (el){
+      el.innerHTML = '';
+      var img = document.createElement('img');
+      img.src = url;
+      img.alt = '';
+      el.appendChild(img);
+    }
+  } catch(e){}
 }
 function onFrames(msg){
   // Never yank the list mid-run or after finishing: the export screens own
@@ -57,8 +80,12 @@ function onFile(msg){
   state.files.push({ id: msg.id, name: msg.name || 'Untitled', bytes: u8 });
   state.got++;
   $('barFill').style.width = Math.round((state.got / Math.max(1, state.expected)) * 100) + '%';
-  var li = document.createElement('li'); li.textContent = (state.plan && state.plan[msg.id]) || (msg.name || 'file');
-  $('doneList').appendChild(li);
+  var dl = $('doneList');
+  if (dl){
+    var li = document.createElement('li');
+    li.textContent = (state.plan && state.plan[msg.id]) || (msg.name || 'file');
+    dl.appendChild(li);
+  }
   var badge = document.getElementById('st-' + CSS.escape(String(msg.id)));
   if (badge){ badge.textContent = 'Done'; badge.parentElement.classList.add('done'); }
   setStatus();
@@ -72,6 +99,7 @@ function onErr(msg){
 window.addEventListener('message', function(e){
   var m = e.data && e.data.pluginMessage; if (!m) return;
   if (m.type === 'frames') onFrames(m);
+  else if (m.type === 'thumbnail') onThumbnail(m);
   else if (m.type === 'file') onFile(m);
   else if (m.type === 'error') onErr(m);
   else if (m.type === 'done') onDone();

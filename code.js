@@ -1,7 +1,3 @@
-/* Bulk export — plugin sandbox (main thread).
- * Plain JS, no build step. Uses async APIs only (dynamic-page).
- */
-
 figma.showUI(__html__, { width: 420, height: 440, themeColors: true });
 
 var EXPORTABLE = { FRAME: true, COMPONENT: true, COMPONENT_SET: true };
@@ -17,11 +13,11 @@ function topLevelExportables() {
         try {
           w = Math.round(n.width || 0);
           h = Math.round(n.height || 0);
-        } catch (e) { /* ignore */ }
+        } catch (e) {}
         out.push({ id: n.id, name: String(n.name || 'Untitled'), width: w, height: h, page: figma.currentPage.name });
       }
     }
-  } catch (e) { /* page not ready */ }
+  } catch (e) {}
   return out;
 }
 
@@ -63,11 +59,8 @@ function postFrames() {
 figma.on('selectionchange', function () { postFrames(); });
 figma.on('currentpagechange', function () { postFrames(); });
 
-// The UI sends { type: 'ready' } on boot, which triggers the first
-// postFrames(). No documentchange listener: it is illegal in
-// dynamic-page (incremental) mode without loadAllPagesAsync(), and
-// selectionchange + currentpagechange already cover renames,
-// adds/deletes and adds/removes on the current page.
+// dynamic-page disallows documentchange without loadAllPagesAsync.
+// selectionchange and currentpagechange handle active canvas state.
 
 function buildSettings(format, scale) {
   var s = Number(scale) || 1;
@@ -98,6 +91,25 @@ figma.ui.onmessage = async function (msg) {
     return;
   }
 
+  if (msg.type === 'get-thumbnails') {
+    var thumbIds = Array.isArray(msg.ids) ? msg.ids : [];
+    for (var t = 0; t < thumbIds.length; t++) {
+      var tId = thumbIds[t];
+      try {
+        var tNode = await figma.getNodeByIdAsync(tId);
+        if (tNode && typeof tNode.exportAsync === 'function') {
+          var tBytes = await tNode.exportAsync({
+            format: 'PNG',
+            constraint: { type: 'WIDTH', value: 88 }
+          });
+          figma.ui.postMessage({ type: 'thumbnail', id: tId, bytes: tBytes });
+        }
+      } catch (err) { /* ignore thumbnail failures */ }
+      await new Promise(function (r) { setTimeout(r, 0); });
+    }
+    return;
+  }
+
   if (msg.type === 'export') {
     var ids = Array.isArray(msg.ids) ? msg.ids : [];
     var format = String(msg.format || 'PNG').toUpperCase();
@@ -121,29 +133,24 @@ figma.ui.onmessage = async function (msg) {
         var name = 'Untitled';
         try { name = String(node.name || 'Untitled'); } catch (e) {}
         if (typeof out === 'string') {
-          // SVG_STRING path (not used by default, but handle it)
           var enc = new TextEncoder();
           bytes = enc.encode(out);
         } else {
-          bytes = out; // Uint8Array
+          bytes = out;
         }
         figma.ui.postMessage({ type: 'file', index: i, total: total, id: id, name: name, bytes: bytes });
       } catch (err) {
         var message = 'Export failed.';
         try { message = (err && err.message) ? String(err.message) : String(err); } catch (e) {}
-        // Friendlier hint for the classic 4x-too-big case
         if (/larger than|too large|memory|4096|size/i.test(message)) {
           message = message + ' Try a smaller scale (1x or 2x).';
         }
         figma.ui.postMessage({ type: 'error', id: id, message: message });
       }
-      // Yield so we never block the main thread between exports
+      // Yield to keep UI responsive between exports.
       await new Promise(function (r) { setTimeout(r, 0); });
     }
     figma.ui.postMessage({ type: 'done' });
-    // Refresh the selection list after the run. The UI ignores
-    // 'frames' while exporting and applies this once done, so the
-    // plugin stays on the done screen instead of jumping.
     postFrames();
   }
 };

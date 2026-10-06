@@ -11,15 +11,17 @@ function applySelected(ids){
 function renderSettings(){
   var btns = document.querySelectorAll('#fmtSeg button');
   for (var i = 0; i < btns.length; i++){ btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-fmt') === state.format ? 'true' : 'false'); }
-  $('qualitySw').setAttribute('aria-checked', state.hq ? 'true' : 'false');
   var sb = document.querySelectorAll('#scaleRow button');
-  for (var j = 0; j < sb.length; j++){ var v = parseFloat(sb[j].getAttribute('data-scale')); sb[j].setAttribute('aria-pressed', v === state.scale ? 'true' : 'false'); sb[j].disabled = !state.hq; }
+  for (var j = 0; j < sb.length; j++){
+    var attr = sb[j].getAttribute('data-scale');
+    var isSel = (attr === 'none' && state.scale === 'none') || (parseFloat(attr) === state.scale);
+    sb[j].setAttribute('aria-pressed', isSel ? 'true' : 'false');
+  }
   var raster = state.format === 'PNG' || state.format === 'JPG';
-  $('scaleRow').style.opacity = (!raster || !state.hq) ? '.45' : '1';
-  $('qualityHint').textContent = raster ? (state.hq ? 'Scale applies to PNG and JPG only.' : 'Quality off: exports at 1x.') : 'SVG and PDF ignore scale.';
+  $('qualityGroup').hidden = !raster;
   $('pdfGroup').hidden = state.format !== 'PDF';
-  var man = $('manifest'); man.innerHTML = '';
-  planFiles().forEach(function(p){ var li = document.createElement('li'); li.textContent = p.file; man.appendChild(li); });
+  var man = $('manifest');
+  if (man){ man.innerHTML = ''; planFiles().forEach(function(p){ var li = document.createElement('li'); li.textContent = p.file; man.appendChild(li); }); }
   $('btnExport').textContent = state.format === 'PDF' && state.pdf === 'single' ? 'Export 1 PDF' : 'Export ' + selCount() + (selCount() === 1 ? ' file' : ' files');
   $('btnExport').disabled = selCount() === 0;
 }
@@ -30,10 +32,13 @@ function show(which){
   $('footDone').hidden = which !== 'screenProgress';
   var nb = $('btnNavBack');
   if (nb) nb.hidden = which !== 'screenSettings';
+  var logo = $('brandLogo');
+  if (logo) logo.hidden = which === 'screenSettings';
 }
 function resetRun(){ state.running = false; state.finished = false; state.expected = 0; state.got = 0; state.files = []; state.fails = []; state.pendingFrames = null;
   $('barFill').style.width = '0'; $('statusLine').textContent = 'Exporting…';
-  $('doneList').innerHTML = ''; $('failBox').hidden = true; $('failList').innerHTML = ''; }
+  var dl = $('doneList'); if (dl) dl.innerHTML = '';
+  $('failBox').hidden = true; $('failList').innerHTML = ''; }
 function download(blob, name){
   var url = URL.createObjectURL(blob); var a = document.createElement('a');
   a.href = url; a.download = name; document.body.appendChild(a); a.click();

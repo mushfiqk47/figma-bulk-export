@@ -42,9 +42,16 @@ function wire(){
   $('btnExport').onclick = startExport;
   var fb = document.querySelectorAll('#fmtSeg button');
   for (var i = 0; i < fb.length; i++){ (function(b){ b.onclick = function(){ state.format = b.getAttribute('data-fmt'); renderSettings(); }; })(fb[i]); }
-  $('qualitySw').onclick = function(){ state.hq = !state.hq; renderSettings(); };
   var sb = document.querySelectorAll('#scaleRow button');
-  for (var j = 0; j < sb.length; j++){ (function(b){ b.onclick = function(){ if (b.disabled) return; state.scale = parseFloat(b.getAttribute('data-scale')); renderSettings(); }; })(sb[j]); }
+  for (var j = 0; j < sb.length; j++){
+    (function(b){
+      b.onclick = function(){
+        var sc = b.getAttribute('data-scale');
+        state.scale = (sc === 'none') ? 'none' : parseFloat(sc);
+        renderSettings();
+      };
+    })(sb[j]);
+  }
   var pr = document.querySelectorAll('input[name="pdfmode"]');
   for (var k = 0; k < pr.length; k++){ pr[k].onchange = function(){ var c = document.querySelector('input[name="pdfmode"]:checked'); state.pdf = c ? c.value : 'single'; renderSettings(); }; }
 }
