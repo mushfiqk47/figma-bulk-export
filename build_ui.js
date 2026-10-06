@@ -1,16 +1,36 @@
 const fs = require('fs');
-const head = fs.readFileSync('src/part_head.html', 'utf8');
-const body = fs.readFileSync('src/part_body.html', 'utf8');
-const p1 = fs.readFileSync('src/app_p1.js', 'utf8');
-const p2 = fs.readFileSync('src/app_p2.js', 'utf8');
-const p3 = fs.readFileSync('src/app_p3.js', 'utf8');
-const p4a = fs.readFileSync('src/app_p4a.js', 'utf8');
-const p4b = fs.readFileSync('src/app_p4b.js', 'utf8');
-const jszip = fs.readFileSync('vendor/jszip.min.js', 'utf8');
-const pdflib = fs.readFileSync('vendor/pdf-lib.min.js', 'utf8');
-const app = [p1, p2, p3, p4a, p4b].join('\n');
-const html = head + body
+const path = require('path');
+
+function read(relPath) {
+  return fs.readFileSync(path.join(__dirname, relPath), 'utf8');
+}
+
+const head = read('src/ui/templates/head.html');
+const themeCss = read('src/ui/styles/theme.css');
+const mainCss = read('src/ui/styles/main.css');
+const body = read('src/ui/templates/body.html');
+
+const jsModules = [
+  'src/ui/js/state.js',
+  'src/ui/js/thumbnails.js',
+  'src/ui/js/ui-renderer.js',
+  'src/ui/js/exporter.js',
+  'src/ui/js/packaging.js',
+  'src/ui/js/pdf-merger.js',
+  'src/ui/js/main.js'
+].map(read).join('\n\n');
+
+const jszip = read('vendor/jszip.min.js');
+const pdflib = read('vendor/pdf-lib.min.js');
+
+const html = head + '\n<style>\n'
+  + themeCss + '\n'
+  + mainCss + '\n</style>\n</head>\n<body>\n'
+  + body + '\n'
   + '<script>\n/* JSZip 3.10.1 (MIT) + pdf-lib 1.17.1 (MIT), inlined for offline use. */\n'
-  + jszip + '\n</script>\n<script>\n' + pdflib + '\n</script>\n<script>\n' + app + '\n</script>\n</body>\n</html>\n';
-fs.writeFileSync('ui.html', html);
+  + jszip + '\n</script>\n<script>\n'
+  + pdflib + '\n</script>\n<script>\n(function(){\n\'use strict\';\n\n'
+  + jsModules + '\n\n})();\n</script>\n</body>\n</html>\n';
+
+fs.writeFileSync(path.join(__dirname, 'ui.html'), html);
 console.log('ui.html bytes=' + Buffer.byteLength(html));

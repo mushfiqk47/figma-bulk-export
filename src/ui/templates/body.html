@@ -1,0 +1,143 @@
+<div class="app">
+  <header class="top">
+    <div class="top-left">
+      <button type="button" class="back-btn" id="btnNavBack" aria-label="Back to selection" title="Back" hidden>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M7.5 2.5L4 6L7.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="logo-mark" id="brandLogo" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M288 64H117.333C87.8781 64 64 87.8781 64 117.333V288C64 317.455 87.8781 341.333 117.333 341.333H288C317.455 341.333 341.333 317.455 341.333 288V117.333C341.333 87.8781 317.455 64 288 64Z" fill="#D9D9D9"/>
+          <path d="M358 117H187.333C157.878 117 134 140.878 134 170.333V341C134 370.455 157.878 394.333 187.333 394.333H358C387.455 394.333 411.333 370.455 411.333 341V170.333C411.333 140.878 387.455 117 358 117Z" fill="#FF4B00"/>
+          <path d="M189 281L285 185M285 259.667V185H210.333" stroke="white" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Bulk export</h1>
+        <p id="subtitle">Select frames on the canvas to export.</p>
+      </div>
+    </div>
+    <span class="badge" id="countBadge">0 selected</span>
+  </header>
+
+  <main>
+    <section id="screenSelect">
+      <div class="tools" id="selTools">
+        <span id="selNote" style="color:var(--ink2)">Showing the canvas selection only.</span>
+        <span style="flex:1"></span>
+        <button class="link" id="selNone">Clear</button>
+      </div>
+      <div class="list" id="frameList"></div>
+      <div class="empty" id="emptyState" hidden>Select one or more frames on the canvas to get started.</div>
+      <p class="hint" id="skipHint" hidden></p>
+    </section>
+
+    <section id="screenSettings" hidden>
+      <div class="g">
+        <h2>File type</h2>
+        <div class="seg" id="fmtSeg">
+          <button data-fmt="PNG" aria-pressed="true">PNG</button>
+          <button data-fmt="JPG" aria-pressed="false">JPG</button>
+          <button data-fmt="SVG" aria-pressed="false">SVG</button>
+          <button data-fmt="PDF" aria-pressed="false">PDF</button>
+        </div>
+      </div>
+      <div class="g" id="pdfGroup" hidden>
+        <h2>PDF mode</h2>
+        <div class="pdf-grid">
+          <label class="radio">
+            <input type="radio" name="pdfmode" value="single" checked>
+            <span>
+              <b>One PDF for all frames</b><br>
+              <span style="color:var(--ink2)">Frames become pages in selection order.</span>
+            </span>
+          </label>
+          <label class="radio">
+            <input type="radio" name="pdfmode" value="each">
+            <span>
+              <b>One PDF per frame</b><br>
+              <span style="color:var(--ink2)">Each frame downloads as its own file.</span>
+            </span>
+          </label>
+        </div>
+      </div>
+      <div class="g" id="qualityGroup">
+        <h2>Scale</h2>
+        <p class="hint" id="qualityHint" style="margin:0 0 8px">Scale applies to PNG and JPG only.</p>
+        <div class="scl" id="scaleRow">
+          <button data-scale="none" aria-pressed="false">None</button>
+          <button data-scale="0.5" aria-pressed="false">0.5x</button>
+          <button data-scale="1" aria-pressed="false">1x</button>
+          <button data-scale="2" aria-pressed="true">2x</button>
+          <button data-scale="3" aria-pressed="false">3x</button>
+          <button data-scale="4" aria-pressed="false">4x</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screenProgress" hidden>
+      <div class="progress-wrap">
+        <div class="export-widget" id="exportWidget">
+          <svg class="export-svg" width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- 4 Precision crosshair ticks -->
+            <line class="widget-tick" x1="80" y1="12" x2="80" y2="20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            <line class="widget-tick" x1="80" y1="140" x2="80" y2="148" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            <line class="widget-tick" x1="12" y1="80" x2="20" y2="80" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            <line class="widget-tick" x1="140" y1="80" x2="148" y2="80" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+
+            <!-- Outer subtle dashed radar ring -->
+            <circle class="widget-dashed" cx="80" cy="80" r="62" stroke="currentColor" stroke-width="1" stroke-dasharray="2 6" fill="none" />
+
+            <!-- Circular track -->
+            <circle class="widget-track" cx="80" cy="80" r="54" stroke="currentColor" stroke-width="2" fill="none" />
+
+            <!-- Active progress / complete ring -->
+            <circle class="widget-ring" id="widgetRing" cx="80" cy="80" r="54" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="339.3" transform="rotate(-90 80 80)" fill="none" />
+
+            <!-- Orbiting accent dot (active while exporting) -->
+            <g class="orbit-dot-group" id="orbitDotGroup">
+              <circle class="orbit-dot" cx="80" cy="26" r="3.5" fill="var(--export-dot)" />
+            </g>
+
+            <!-- Document file icon in the center -->
+            <g class="doc-icon-group" id="docIconGroup">
+              <!-- File body with folded top-right corner -->
+              <path class="doc-body" d="M 63 52 H 91 L 101 62 V 103 C 101 106 99 108 96 108 H 63 C 60 108 58 106 58 103 V 57 C 58 54 60 52 63 52 Z" />
+              <!-- Folded flap -->
+              <path class="doc-fold" d="M 91 52 V 60 C 91 61.5 92 62 93.5 62 H 101" />
+              <!-- Document horizontal text lines -->
+              <line class="doc-line" x1="68" y1="70" x2="84" y2="70" />
+              <line class="doc-line" x1="68" y1="77" x2="93" y2="77" />
+              <!-- Dynamic format label: SVG / PNG / JPG / PDF -->
+              <text class="doc-format" id="exportDocFormat" x="80" y="96" text-anchor="middle" dominant-baseline="central">SVG</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="progress-info">
+          <h2 class="progress-title" id="progressTitle">Exporting…</h2>
+          <p class="status" id="statusLine">Preparing export…</p>
+        </div>
+
+        <div class="bar"><i id="barFill"></i></div>
+
+        <div class="failbox" id="failBox" hidden>
+          <h3>Some frames failed</h3>
+          <ul id="failList"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footSelect">
+    <button class="btn primary" id="btnContinue" disabled>Continue</button>
+  </footer>
+  <footer id="footSettings" hidden>
+    <button class="btn primary" id="btnExport">Export</button>
+  </footer>
+  <footer id="footDone" hidden>
+    <button class="btn secondary" id="btnBack2">Back</button>
+    <button class="btn primary" id="btnMore">Export more</button>
+  </footer>
+</div>

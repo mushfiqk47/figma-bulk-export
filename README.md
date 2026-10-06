@@ -6,22 +6,48 @@ Export the frames you select on the canvas as PNG, JPG, SVG or PDF. No build ste
 
 | 1. Empty State | 2. Selection & Previews |
 | :---: | :---: |
-| <img src="src/Product%20images/01_empty_selection.png" width="300" alt="Empty selection state" /> | <img src="src/Product%20images/02_frames_selected.png" width="300" alt="Frames selected with thumbnails" /> |
+| <img src="assets/screenshots/01_empty_selection.png" width="300" alt="Empty selection state" /> | <img src="assets/screenshots/02_frames_selected.png" width="300" alt="Frames selected with thumbnails" /> |
 
 | 3. PNG / JPG Settings | 4. PDF Merge Settings |
 | :---: | :---: |
-| <img src="src/Product%20images/03_raster_export_settings.png" width="300" alt="Raster format and scale settings" /> | <img src="src/Product%20images/04_pdf_export_settings.png" width="300" alt="PDF mode side-by-side options" /> |
+| <img src="assets/screenshots/03_raster_export_settings.png" width="300" alt="Raster format and scale settings" /> | <img src="assets/screenshots/04_pdf_export_settings.png" width="300" alt="PDF mode side-by-side options" /> |
 
-## Files you import
+## Codebase Architecture
 
-- `manifest.json` — api 1.0.0, `editorType: figma`, `documentAccess: dynamic-page`, `networkAccess: { allowedDomains: ["none"] }`.
-- `code.js` — sandbox: posts the canvas selection only (FRAME / COMPONENT / COMPONENT_SET plus skipped count), generates fast thumbnail previews on demand, exports sequentially with `getNodeByIdAsync` + `node.exportAsync`.
-- `ui.html` — full UI built with Sora typography, dark/light theming, with JSZip 3.10.1 + pdf-lib 1.17.1 inlined (works 100% offline).
-- `README.md` — this file.
+```
+Figma Export Plugins/
+├── manifest.json              # Plugin manifest (Figma 1.0.0 API)
+├── code.js                    # Figma sandbox main thread (concurrent export pool & cancelable thumbnails)
+├── ui.html                    # Offline standalone distribution bundle
+├── build_ui.js                # Assembly script combining src/ui/ and vendor/ into ui.html
+├── README.md                  # Plugin documentation
+├── vendor/
+│   ├── jszip.min.js           # JSZip 3.10.1 (MIT)
+│   └── pdf-lib.min.js         # pdf-lib 1.17.1 (MIT)
+├── assets/
+│   ├── logo.svg               # Vector brand mark
+│   └── screenshots/           # Documentation images
+└── src/
+    └── ui/
+        ├── styles/
+        │   ├── theme.css      # Design tokens, light & dark theme variables
+        │   └── main.css       # Layout, components, buttons, focus outlines
+        ├── templates/
+        │   ├── head.html      # Meta, fonts, and header shell
+        │   └── body.html      # App structure (Select, Settings, Progress views)
+        └── js/
+            ├── state.js       # App state, demo fallback, file planning
+            ├── thumbnails.js  # Lazy loading observer & blob URL lifecycle
+            ├── ui-renderer.js # List rendering, in-place toggling, settings sync
+            ├── exporter.js    # Export dispatcher & IPC file collector
+            ├── packaging.js   # Fast STORE/DEFLATE zip creation & downloads
+            ├── pdf-merger.js  # pdf-lib multi-page document merger
+            └── main.js        # Event listeners, theme detection, app boot
+```
 
 ## Build command
 
-If you modify source files in `src/` or assets in `vendor/`, recompile the standalone `ui.html` bundle with:
+If you modify source files in `src/ui/` or assets in `vendor/`, recompile the standalone `ui.html` bundle with:
 
 ```bash
 node build_ui.js
@@ -40,12 +66,12 @@ The script inlines the modular HTML, CSS, JavaScript parts, and vendor libraries
 
 ## Notes and limits
 
-- **Live Previews**: Selected frames automatically fetch and render miniature visual thumbnails in the selection list.
+- **Live Previews**: Selected frames render miniature visual thumbnails in the list via lazy viewport loading.
 - **Canvas Selection Tracking**: The list mirrors your canvas selection only. Non-frame layers are counted and skipped with one hint line.
-- **Raster Scaling**: PNG and JPG support `None`, `0.5x`, `1x`, `2x`, `3x`, and `4x`. SVG and PDF ignore scale.
-- **Side-by-side PDF Options**: 
+- **Raster Scaling**: PNG and JPG support None, 0.5x, 1x, 2x, 3x, and 4x. SVG and PDF ignore scale.
+- **Side-by-side PDF Options**:
   - *One PDF for all frames*: Figma returns single-page PDFs per frame and merges them into one `frames.pdf` in selection order with pdf-lib. If a vector page fails to parse, it falls back to zipping individual PDFs safely.
   - *One PDF per frame*: Each frame downloads as its own individual PDF.
-- **Naming & Packaging**: 1 file downloads directly; 2+ files zip cleanly with JSZip. Filenames follow sanitized frame names with scale suffixes (`@2x`, `@3x`) when applicable.
+- **Naming & Packaging**: 1 file downloads directly; 2+ files zip cleanly with JSZip (using STORE mode for instant downloads on compressed raster formats).
 - **Theming**: Native Figma theming (`figma-light` / `figma-dark`) with system `prefers-color-scheme` fallback.
 - **Offline**: Zero network dependencies, zero telemetry. Fully sandboxed and secure.

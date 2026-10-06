@@ -1597,3 +1597,68 @@ animate y, not opacity-to-0.)
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <!--  END — the pols.dev anti-slop design law  ·  https://pols.dev/slop.md    -->
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
+
+# Agent Work Log
+
+This log tracks all actions, updates, fixes, and builds performed by AI agents in this repository.
+
+---
+
+### [2026-10-06 19:18] Architecture Refactoring, Dead Code Removal, and Production Build
+
+- **Task**: Read full codebase, remove dead code and unwanted files, refactor folder structure for scalability and professionalism, optimize performance, and build standalone bundle.
+- **Actions and Changes**:
+  - `code.js`: Removed unused `topLevelExportables()` function and payload; implemented cancelable aspect-ratio-aware thumbnail export pipeline; added concurrent worker pool ($N=2$) with IPC yielding.
+  - `src/ui/`: Restructured into clean, professional modules:
+    - `src/ui/styles/`: Split styles into `theme.css` and `main.css`. Removed unused `.swrow`, `.sw`, and `.manifest` classes.
+    - `src/ui/templates/`: Split layout into `head.html` and `body.html`.
+    - `src/ui/js/`: Created single-responsibility files (`state.js`, `thumbnails.js`, `ui-renderer.js`, `exporter.js`, `packaging.js`, `pdf-merger.js`, `main.js`). Removed dead functions and unused variables (`applySelected`, `doneList`, `b1`, `hq`, `single`).
+  - `assets/`: Created `assets/screenshots/` and `assets/logo.svg`, removing legacy `src/Product images/` directory and spaces in paths.
+  - Removed unwanted and legacy files: `src/app_p*.js`, `src/part_*.html`, `dist/`.
+  - `build_ui.js`: Updated assembly script to compile modular files into `ui.html`.
+  - `README.md`: Updated architecture documentation and preview image paths.
+  - Recompiled `ui.html` via `node build_ui.js` (656,405 bytes).
+- **Verification**: Executed Node.js syntax checks (`node -c`) on all JS files, ran VM simulation testing on `code.js`, tested `JSZip` and `pdf-lib` execution, and completed Anti-Slop Design Law verification.
+
+---
+
+### [2026-10-06 19:12] Add Agent Work Logging Law and Initialize Log
+
+- **Task**: Add a mandatory command to `AGENTS.md` requiring AI agents to log all work done, and initialize the log file.
+- **Actions and Changes**:
+  - Appended `Agent Work Logging Law` to the end of `AGENTS.md`.
+  - Created `AGENT_LOG.md` to record all historical and ongoing agent actions.
+- **Verification**: Verified `AGENTS.md` file integrity and markdown formatting.
+
+---
+
+### [2026-10-06 19:11] Add Arrow & Circle Hero with Completion Pop & Green-Out
+
+- **Task**: Enhance the export screen UI with an arrow and surrounding circle, giving the arrow pop on completion and turning green.
+- **Actions and Changes**:
+  - `src/part_head.html`: Added `--ok: #15803d` / `--ok-bg` (light) and `--ok: #22c55e` / `--ok-bg` (dark), `.progress-wrap`, `.progress-hero`, `.circle-track`, `.circle-ring`, `.hero-arrow-group`, and keyframes `arrowPop`, `circlePop`, `arrowPulse`.
+  - `src/part_body.html`: Replaced empty progress screen layout with vertically centered SVG hero (72x72) containing circular progress ring and downward arrow.
+  - `src/app_p2.js`: Updated `resetRun()` to reset the hero, circular ring offset, and button states.
+  - `src/app_p3.js`: Added `updateProgress()` helper driving both linear and circular tracks; disabled footer buttons mid-export to prevent navigation interruptions.
+  - `src/app_p4a.js`: Activated `.is-done` state on `onDone()`, triggering the spring arrow pop, green ring, and copy updates. Re-enabled footer buttons.
+  - Rebuilt `ui.html` via `node build_ui.js`.
+- **Verification**: Ran `node build_ui.js` (658,810 bytes generated) and validated syntax across all 3 embedded script bundles.
+
+---
+
+### [2026-10-06 19:01] Fix Button Hover State Text Color to White
+
+- **Task**: Fix button hover state in UI so text color turns to white on hover instead of dark text on grey background.
+- **Actions and Changes**:
+  - `src/part_head.html`: Updated `.btn:not(:disabled):hover`, `.btn.primary:not(:disabled):hover`, and `.back-btn:hover` to use `color: #ffffff`. Added `color .15s ease` to transitions.
+  - Rebuilt `ui.html` via `node build_ui.js`.
+- **Verification**: Ran WCAG contrast checks (7.19:1 on dark mode `#585858`, 10.7:1 on light mode `#313131`).
+
+---
+
+### [2026-10-06 18:54] Document Build Command in README
+
+- **Task**: Add explicit build command to `README.md`.
+- **Actions and Changes**:
+  - `README.md`: Added dedicated `## Build command` section documenting `node build_ui.js`.
+- **Verification**: Executed `node build_ui.js` and confirmed standalone `ui.html` compilation.

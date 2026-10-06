@@ -1,0 +1,45 @@
+:root {
+  --bg: #f3eee7;
+  --bg2: #ffffff;
+  --ink: #313131;
+  --ink2: #585858;
+  --ink3: #aaa6a3;
+  --line: #313131;
+  --accent: #313131;
+  --danger: #8a2529;
+  --ok: #15803d;
+  --ok-bg: rgba(21, 128, 61, 0.08);
+  --export-doc: #ffffff;
+  --export-doc-border: rgba(49, 49, 49, 0.28);
+  --export-doc-lines: rgba(49, 49, 49, 0.2);
+  --export-track: rgba(49, 49, 49, 0.15);
+  --export-tick: rgba(49, 49, 49, 0.32);
+  --export-dot: #FF4B00;
+  --r: 8px;
+  --r-sm: 6px;
+  --r-pill: 99px;
+  --font-base: "Sora", -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+html.figma-dark,
+body.figma-dark {
+  --bg: #202020;
+  --bg2: #282828;
+  --ink: #f3eee7;
+  --ink2: #aaa6a3;
+  --ink3: #6b6764;
+  --line: #585858;
+  --accent: #f3eee7;
+  --danger: #e57373;
+  --ok: #10B981;
+  --ok-bg: rgba(16, 185, 129, 0.12);
+  --export-doc: #23272f;
+  --export-doc-border: rgba(255, 255, 255, 0.18);
+  --export-doc-lines: rgba(255, 255, 255, 0.22);
+  --export-track: rgba(255, 255, 255, 0.12);
+  --export-tick: rgba(255, 255, 255, 0.3);
+  --export-dot: #FF4B00;
+  --r: 8px;
+  --r-sm: 6px;
+  --r-pill: 99px;
+}
