@@ -2,13 +2,12 @@
 
 Export multiple frames from your canvas quickly without repetitive manual exports.
 
-Select any frames on your canvas, pick your desired format and scale, and download your assets directly as individual files, a clean ZIP archive, a merged multi-page PDF document, or a standalone HTML file.
+Select any frames on your canvas, pick your desired format and scale, and download your assets directly as individual files, a clean ZIP archive, or a merged multi-page PDF document.
 
 ## Key Features
 
 - **Live Canvas Previews**: View thumbnail previews of all selected frames directly in the plugin list.
-- **Multi-Format Support**: Export to PNG, JPG, SVG, PDF, or standalone HTML.
-- **Standalone HTML Export**: Export a single frame into a self-contained, responsive HTML document with 100% vector precision and outlined text—zero external fonts, CDNs, or network requests required.
+- **Multi-Format Support**: Export to PNG, JPG, SVG, or PDF.
 - **Multi-Page PDF Merge**: Combine selected frames into a single, ordered multi-page PDF document, or download each frame as its own individual PDF.
 - **Custom Scaling**: Choose between None, 0.5x, 1x, 2x, 3x, and 4x resolution for raster formats (PNG and JPG).
 - **Fast Offline Packaging**: Bundled with in-memory zip compression (STORE and DEFLATE) for near-instant downloads.
@@ -71,7 +70,7 @@ The script inlines the modular HTML, CSS, JavaScript parts, and vendor libraries
 
 1. **Select frames**: Select one or more frames, components, or component sets on your Figma canvas.
 2. **Launch Velto**: Open **Plugins** > **Development** > **Velto**. Your selected frames appear instantly with live thumbnail previews.
-3. **Configure & Export**: Pick your file format, scale, or PDF mode, then click **Export**. Selecting a single frame also unlocks the standalone HTML export option.
+3. **Configure & Export**: Pick your file format, scale, or PDF mode, then click **Export**.
 4. **Done screen**: After export, stay on the completion screen, go **Back**, or click **Export more** to return with your canvas selection refreshed.
 
 ### Installation (Import via Manifest)
@@ -83,13 +82,10 @@ The script inlines the modular HTML, CSS, JavaScript parts, and vendor libraries
 
 - **Live Previews**: Selected frames render miniature visual thumbnails in the list via lazy viewport loading.
 - **Canvas Selection Tracking**: The list mirrors your canvas selection only. Non-frame layers are counted and skipped with one hint line.
-- **Single-Frame HTML Export Modes**: When exactly 1 frame is selected, an **HTML** format button appears with two packaging options:
-  - *Single file (.html)*: Exports a self-contained, responsive HTML5 file with 1:1 vector precision and outlined text—zero external fonts, CDNs, or network requests.
-  - *Web bundle (.zip)*: Packages a clean developer web project containing `index.html`, `css/style.css`, `js/main.js`, and an `assets/` folder with all extracted media files.
-- **Raster Scaling**: PNG and JPG support None, 0.5x, 1x, 2x, 3x, and 4x. SVG, PDF, and HTML ignore scale.
+- **Raster Scaling**: PNG and JPG support None, 0.5x, 1x, 2x, 3x, and 4x. SVG and PDF ignore scale.
 - **Side-by-side PDF Options**:
   - *One PDF for all frames*: Figma returns single-page PDFs per frame and merges them into one `frames.pdf` in selection order with pdf-lib. If a vector page fails to parse, it falls back to zipping individual PDFs safely.
   - *One PDF per frame*: Each frame downloads as its own individual PDF.
-- **Naming & Packaging**: 1 file (including standalone HTML, single PDF, or single image) downloads directly; 2+ files zip cleanly with JSZip (using STORE mode for instant downloads on compressed raster formats).
+- **Naming & Packaging**: 1 file (single PDF or single image) downloads directly; 2+ files zip cleanly with JSZip (using STORE mode for instant downloads on compressed raster formats).
 - **Theming**: Native Figma theming (`figma-light` / `figma-dark`) with system `prefers-color-scheme` fallback.
 - **Offline**: Zero network dependencies, zero telemetry. Fully sandboxed and secure.

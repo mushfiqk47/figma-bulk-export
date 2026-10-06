@@ -93,10 +93,6 @@ function buildSettings(format, scale) {
   if (format === 'SVG') {
     return { format: 'SVG' };
   }
-  if (format === 'HTML') {
-    return { format: 'SVG', svgOutlineText: true, svgIdAttribute: true };
-  }
-  // PDF ignores scale
   return { format: 'PDF' };
 }
 
@@ -154,7 +150,7 @@ figma.ui.onmessage = async function (msg) {
     cancelThumbnails = true;
     var ids = Array.isArray(msg.ids) ? msg.ids : [];
     var format = String(msg.format || 'PNG').toUpperCase();
-    if (['PNG', 'JPG', 'SVG', 'PDF', 'HTML'].indexOf(format) < 0) format = 'PNG';
+    if (['PNG', 'JPG', 'SVG', 'PDF'].indexOf(format) < 0) format = 'PNG';
     var rawScale = Number(msg.scale) || 1;
     var scale = rawScale;
 
@@ -173,20 +169,24 @@ figma.ui.onmessage = async function (msg) {
           var idx = item.index;
           try {
             var node = await figma.getNodeByIdAsync(id);
-            if (!node || typeof node.exportAsync !== 'function') {
-              figma.ui.postMessage({ type: 'error', id: id, message: 'Node no longer exists or cannot be exported.' });
+            if (!node) {
+              figma.ui.postMessage({ type: 'error', id: id, message: 'Node no longer exists.' });
+              continue;
+            }
+            if (typeof node.exportAsync !== 'function') {
+              figma.ui.postMessage({ type: 'error', id: id, message: 'Node cannot be exported.' });
               continue;
             }
             var out = await node.exportAsync(settings);
             var bytes;
-            var name = 'Untitled';
-            try { name = String(node.name || 'Untitled'); } catch (e) {}
             if (typeof out === 'string') {
               var enc = new TextEncoder();
               bytes = enc.encode(out);
             } else {
               bytes = out;
             }
+            var name = 'Untitled';
+            try { name = String(node.name || 'Untitled'); } catch (e) {}
             figma.ui.postMessage({ type: 'file', index: idx, total: total, id: id, name: name, bytes: bytes });
           } catch (err) {
             var message = 'Export failed.';
@@ -210,4 +210,3 @@ figma.ui.onmessage = async function (msg) {
 
 // Dispatch initial selection immediately on startup
 postFrames();
-

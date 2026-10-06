@@ -41,7 +41,6 @@
           <button data-fmt="JPG" aria-pressed="false">JPG</button>
           <button data-fmt="SVG" aria-pressed="false">SVG</button>
           <button data-fmt="PDF" aria-pressed="false">PDF</button>
-          <button data-fmt="HTML" id="btnFmtHtml" aria-pressed="false" hidden>HTML</button>
         </div>
       </div>
       <div class="g" id="pdfGroup" hidden>
@@ -59,25 +58,6 @@
             <span>
               <b>One PDF per frame</b><br>
               <span style="color:var(--ink2)">Each frame downloads as its own file.</span>
-            </span>
-          </label>
-        </div>
-      </div>
-      <div class="g" id="htmlGroup" hidden>
-        <h2>HTML mode</h2>
-        <div class="pdf-grid">
-          <label class="radio">
-            <input type="radio" name="htmlmode" value="single" checked>
-            <span>
-              <b>Single file (.html)</b><br>
-              <span style="color:var(--ink2)">Self-contained, portable, zero dependencies.</span>
-            </span>
-          </label>
-          <label class="radio">
-            <input type="radio" name="htmlmode" value="bundle">
-            <span>
-              <b>Web bundle (.zip)</b><br>
-              <span style="color:var(--ink2)">index.html, css/, js/ and assets/ folder.</span>
             </span>
           </label>
         </div>
