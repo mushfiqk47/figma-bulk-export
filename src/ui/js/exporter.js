@@ -59,6 +59,9 @@ function applyFramesMsg(msg) {
   }
 
   renderList();
+  if (!$('screenSettings').hidden) {
+    renderSettings();
+  }
   requestThumbnails();
 }
 
@@ -133,7 +136,13 @@ function simulate() {
       }
     }
     var label = (f ? f.name : 'Frame') + ' demo bytes';
-    var bytes = new TextEncoder().encode(label);
+    var bytes;
+    if (state.format === 'HTML' || state.format === 'SVG') {
+      var svgMock = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="#f5f5f5"/><text x="200" y="150" font-family="sans-serif" font-size="20" fill="#333" text-anchor="middle" dominant-baseline="middle">' + (f ? f.name : 'Frame') + '</text></svg>';
+      bytes = new TextEncoder().encode(svgMock);
+    } else {
+      bytes = new TextEncoder().encode(label);
+    }
     onFile({ id: id, name: f ? f.name : 'Frame', bytes: bytes, index: i, total: state.order.length });
     i++;
     setTimeout(next, 350);

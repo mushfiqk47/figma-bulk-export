@@ -1,6 +1,6 @@
 # Bulk export
 
-Export the frames you select on the canvas as PNG, JPG, SVG or PDF. No build step, no network, plain JavaScript.
+Export the frames you select on the canvas as PNG, JPG, SVG, PDF, or standalone HTML. No build step, no network, plain JavaScript.
 
 ## Previews
 
