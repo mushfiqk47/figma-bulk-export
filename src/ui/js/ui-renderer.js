@@ -93,6 +93,15 @@ function toggle(id, on) {
 }
 
 function renderSettings() {
+  var isSingle = selCount() === 1;
+  var htmlBtn = $('btnFmtHtml');
+  if (htmlBtn) {
+    htmlBtn.hidden = !isSingle;
+    if (!isSingle && state.format === 'HTML') {
+      state.format = 'PNG';
+    }
+  }
+
   var btns = document.querySelectorAll('#fmtSeg button');
   for (var i = 0; i < btns.length; i++) {
     btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-fmt') === state.format ? 'true' : 'false');
@@ -106,7 +115,13 @@ function renderSettings() {
   var raster = state.format === 'PNG' || state.format === 'JPG';
   $('qualityGroup').hidden = !raster;
   $('pdfGroup').hidden = state.format !== 'PDF';
-  $('btnExport').textContent = state.format === 'PDF' && state.pdf === 'single' ? 'Export 1 PDF' : 'Export ' + selCount() + (selCount() === 1 ? ' file' : ' files');
+  if (state.format === 'HTML') {
+    $('btnExport').textContent = 'Export 1 HTML file';
+  } else if (state.format === 'PDF' && state.pdf === 'single') {
+    $('btnExport').textContent = 'Export 1 PDF';
+  } else {
+    $('btnExport').textContent = 'Export ' + selCount() + (selCount() === 1 ? ' file' : ' files');
+  }
   $('btnExport').disabled = selCount() === 0;
 }
 

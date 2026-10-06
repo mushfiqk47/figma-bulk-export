@@ -53,6 +53,9 @@ function buildSettings(format, scale) {
   if (format === 'SVG') {
     return { format: 'SVG' };
   }
+  if (format === 'HTML') {
+    return { format: 'SVG', svgOutlineText: true, svgIdAttribute: true };
+  }
   // PDF ignores scale
   return { format: 'PDF' };
 }
@@ -102,7 +105,7 @@ figma.ui.onmessage = async function (msg) {
     cancelThumbnails = true;
     var ids = Array.isArray(msg.ids) ? msg.ids : [];
     var format = String(msg.format || 'PNG').toUpperCase();
-    if (['PNG', 'JPG', 'SVG', 'PDF'].indexOf(format) < 0) format = 'PNG';
+    if (['PNG', 'JPG', 'SVG', 'PDF', 'HTML'].indexOf(format) < 0) format = 'PNG';
     var rawScale = Number(msg.scale) || 1;
     var scale = rawScale;
 

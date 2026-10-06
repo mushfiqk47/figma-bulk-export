@@ -353,6 +353,10 @@ body.figma-dark .link:hover {
   gap: 7px;
 }
 
+.seg:has(#btnFmtHtml:not([hidden])) {
+  grid-template-columns: repeat(5, 1fr);
+}
+
 .seg button,
 .scl button {
   border: 1px solid var(--line);
@@ -882,6 +886,7 @@ body.figma-dark .btn.primary:not(:disabled):hover {
           <button data-fmt="JPG" aria-pressed="false">JPG</button>
           <button data-fmt="SVG" aria-pressed="false">SVG</button>
           <button data-fmt="PDF" aria-pressed="false">PDF</button>
+          <button data-fmt="HTML" id="btnFmtHtml" aria-pressed="false" hidden>HTML</button>
         </div>
       </div>
       <div class="g" id="pdfGroup" hidden>
@@ -1073,7 +1078,7 @@ function effScale() {
 }
 
 function ext() {
-  return state.format === 'JPG' ? 'jpg' : state.format === 'PNG' ? 'png' : state.format === 'SVG' ? 'svg' : 'pdf';
+  return state.format === 'JPG' ? 'jpg' : state.format === 'PNG' ? 'png' : state.format === 'SVG' ? 'svg' : state.format === 'HTML' ? 'html' : 'pdf';
 }
 
 function sanitize(n) {
@@ -1235,6 +1240,15 @@ function toggle(id, on) {
 }
 
 function renderSettings() {
+  var isSingle = selCount() === 1;
+  var htmlBtn = $('btnFmtHtml');
+  if (htmlBtn) {
+    htmlBtn.hidden = !isSingle;
+    if (!isSingle && state.format === 'HTML') {
+      state.format = 'PNG';
+    }
+  }
+
   var btns = document.querySelectorAll('#fmtSeg button');
   for (var i = 0; i < btns.length; i++) {
     btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-fmt') === state.format ? 'true' : 'false');
@@ -1248,7 +1262,13 @@ function renderSettings() {
   var raster = state.format === 'PNG' || state.format === 'JPG';
   $('qualityGroup').hidden = !raster;
   $('pdfGroup').hidden = state.format !== 'PDF';
-  $('btnExport').textContent = state.format === 'PDF' && state.pdf === 'single' ? 'Export 1 PDF' : 'Export ' + selCount() + (selCount() === 1 ? ' file' : ' files');
+  if (state.format === 'HTML') {
+    $('btnExport').textContent = 'Export 1 HTML file';
+  } else if (state.format === 'PDF' && state.pdf === 'single') {
+    $('btnExport').textContent = 'Export 1 PDF';
+  } else {
+    $('btnExport').textContent = 'Export ' + selCount() + (selCount() === 1 ? ' file' : ' files');
+  }
   $('btnExport').disabled = selCount() === 0;
 }
 
@@ -1327,6 +1347,9 @@ function applyFramesMsg(msg) {
   }
 
   renderList();
+  if (!$('screenSettings').hidden) {
+    renderSettings();
+  }
   requestThumbnails();
 }
 
@@ -1401,7 +1424,13 @@ function simulate() {
       }
     }
     var label = (f ? f.name : 'Frame') + ' demo bytes';
-    var bytes = new TextEncoder().encode(label);
+    var bytes;
+    if (state.format === 'HTML' || state.format === 'SVG') {
+      var svgMock = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="#f5f5f5"/><text x="200" y="150" font-family="sans-serif" font-size="20" fill="#333" text-anchor="middle" dominant-baseline="middle">' + (f ? f.name : 'Frame') + '</text></svg>';
+      bytes = new TextEncoder().encode(svgMock);
+    } else {
+      bytes = new TextEncoder().encode(label);
+    }
     onFile({ id: id, name: f ? f.name : 'Frame', bytes: bytes, index: i, total: state.order.length });
     i++;
     setTimeout(next, 350);
@@ -1527,7 +1556,36 @@ async function downloadZip() {
   download(blob, 'bulk-' + state.format.toLowerCase() + '-export.zip');
 }
 
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function toBlob(f) {
+  if (state.format === 'HTML') {
+    var svgText = '';
+    try {
+      svgText = new TextDecoder('utf-8').decode(f.bytes);
+    } catch (e) {
+      svgText = String.fromCharCode.apply(null, f.bytes);
+    }
+    var title = escapeHtml(f.name || 'Frame');
+    var htmlDoc = '<!DOCTYPE html>\n'
+      + '<html lang="en">\n<head>\n'
+      + '<meta charset="utf-8">\n'
+      + '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+      + '<title>' + title + '</title>\n'
+      + '<style>\n'
+      + '  * { box-sizing: border-box; }\n'
+      + '  html, body { margin: 0; padding: 0; min-height: 100vh; background: #ffffff; }\n'
+      + '  .frame-viewport { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }\n'
+      + '  svg { display: block; max-width: 100%; height: auto; }\n'
+      + '</style>\n'
+      + '</head>\n<body>\n'
+      + '<div class="frame-viewport">\n'
+      + svgText + '\n'
+      + '</div>\n</body>\n</html>\n';
+    return new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
+  }
   var mime = state.format === 'PNG' ? 'image/png'
     : state.format === 'JPG' ? 'image/jpeg'
     : state.format === 'SVG' ? 'image/svg+xml'

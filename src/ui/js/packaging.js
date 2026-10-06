@@ -94,7 +94,36 @@ async function downloadZip() {
   download(blob, 'bulk-' + state.format.toLowerCase() + '-export.zip');
 }
 
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function toBlob(f) {
+  if (state.format === 'HTML') {
+    var svgText = '';
+    try {
+      svgText = new TextDecoder('utf-8').decode(f.bytes);
+    } catch (e) {
+      svgText = String.fromCharCode.apply(null, f.bytes);
+    }
+    var title = escapeHtml(f.name || 'Frame');
+    var htmlDoc = '<!DOCTYPE html>\n'
+      + '<html lang="en">\n<head>\n'
+      + '<meta charset="utf-8">\n'
+      + '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+      + '<title>' + title + '</title>\n'
+      + '<style>\n'
+      + '  * { box-sizing: border-box; }\n'
+      + '  html, body { margin: 0; padding: 0; min-height: 100vh; background: #ffffff; }\n'
+      + '  .frame-viewport { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }\n'
+      + '  svg { display: block; max-width: 100%; height: auto; }\n'
+      + '</style>\n'
+      + '</head>\n<body>\n'
+      + '<div class="frame-viewport">\n'
+      + svgText + '\n'
+      + '</div>\n</body>\n</html>\n';
+    return new Blob([htmlDoc], { type: 'text/html;charset=utf-8' });
+  }
   var mime = state.format === 'PNG' ? 'image/png'
     : state.format === 'JPG' ? 'image/jpeg'
     : state.format === 'SVG' ? 'image/svg+xml'
