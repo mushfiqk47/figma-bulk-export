@@ -1,0 +1,36 @@
+<div class="app">
+<header class="top"><div class="top-left"><button type="button" class="back-btn" id="btnNavBack" aria-label="Back to selection" title="Back" hidden><svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7.5 2.5L4 6L7.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div><h1>Bulk export</h1><p id="subtitle">Select frames on the canvas to export.</p></div></div><span class="badge" id="countBadge">0 selected</span></header>
+<main>
+<section id="screenSelect">
+<div class="tools" id="selTools"><span id="selNote" style="color:var(--ink2)">Showing the canvas selection only.</span><span style="flex:1"></span><button class="link" id="selNone">Clear</button></div>
+<div class="list" id="frameList"></div>
+<div class="empty" id="emptyState" hidden>Select one or more frames on the canvas to get started.</div>
+<p class="hint" id="skipHint" hidden></p>
+</section>
+<section id="screenSettings" hidden>
+<div class="g"><h2>File type</h2><div class="seg" id="fmtSeg">
+<button data-fmt="PNG" aria-pressed="true">PNG</button><button data-fmt="JPG" aria-pressed="false">JPG</button><button data-fmt="SVG" aria-pressed="false">SVG</button><button data-fmt="PDF" aria-pressed="false">PDF</button>
+</div></div>
+<div class="g" id="qualityGroup"><h2>Quality</h2>
+<div class="swrow"><span>High quality</span><button class="sw" id="qualitySw" aria-checked="true" aria-label="High quality"></button></div>
+<p class="hint" id="qualityHint">Scale applies to PNG and JPG only.</p>
+<div class="scl" id="scaleRow" style="margin-top:8px">
+<button data-scale="0.5" aria-pressed="false">0.5x</button><button data-scale="1" aria-pressed="false">1x</button><button data-scale="2" aria-pressed="true">2x</button><button data-scale="3" aria-pressed="false">3x</button><button data-scale="4" aria-pressed="false">4x</button>
+</div></div>
+<div class="g" id="pdfGroup" hidden><h2>PDF mode</h2>
+<label class="radio"><input type="radio" name="pdfmode" value="single" checked><span><b>One PDF for all frames</b><br><span style="color:var(--ink2)">Frames become pages in selection order.</span></span></label>
+<label class="radio"><input type="radio" name="pdfmode" value="each"><span><b>One PDF per frame</b><br><span style="color:var(--ink2)">Each frame downloads as its own file.</span></span></label>
+</div>
+<div class="g"><h2>Files</h2><ul class="manifest" id="manifest"></ul></div>
+</section>
+<section id="screenProgress" hidden>
+<div class="bar"><i id="barFill"></i></div>
+<p class="status" id="statusLine">Exporting…</p>
+<ul class="manifest" id="doneList"></ul>
+<div class="failbox" id="failBox" hidden><h3>Some frames failed</h3><ul id="failList"></ul></div>
+</section>
+</main>
+<footer id="footSelect"><button class="btn primary" id="btnContinue" disabled>Continue</button></footer>
+<footer id="footSettings" hidden><button class="btn primary" id="btnExport">Export</button></footer>
+<footer id="footDone" hidden><button class="btn secondary" id="btnBack2">Back</button><button class="btn primary" id="btnMore">Export more</button></footer>
+</div>
