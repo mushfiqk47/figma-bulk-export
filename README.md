@@ -19,7 +19,15 @@ Export the frames you select on the canvas as PNG, JPG, SVG or PDF. No build ste
 - `ui.html` — full UI built with Sora typography, dark/light theming, with JSZip 3.10.1 + pdf-lib 1.17.1 inlined (works 100% offline).
 - `README.md` — this file.
 
-Build sources (not needed for import, kept for transparency): `src/` + `vendor/` + `build_ui.js` regenerate `ui.html` via `node build_ui.js`.
+## Build command
+
+If you modify source files in `src/` or assets in `vendor/`, recompile the standalone `ui.html` bundle with:
+
+```bash
+node build_ui.js
+```
+
+The script inlines the modular HTML, CSS, JavaScript parts, and vendor libraries into `ui.html`.
 
 ## Import via manifest
 
