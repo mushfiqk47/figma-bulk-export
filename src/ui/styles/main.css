@@ -299,6 +299,10 @@ body.figma-dark .link:hover {
   gap: 7px;
 }
 
+.seg:has(#btnFmtHtml:not([hidden])) {
+  grid-template-columns: repeat(5, 1fr);
+}
+
 .seg button,
 .scl button {
   border: 1px solid var(--line);

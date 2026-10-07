@@ -18,6 +18,7 @@ var state = {
   format: 'PNG',
   scale: 2,
   pdf: 'single',
+  html: 'single',
   running: false,
   finished: false,
   expected: 0,
@@ -49,7 +50,7 @@ function effScale() {
 }
 
 function ext() {
-  return state.format === 'JPG' ? 'jpg' : state.format === 'PNG' ? 'png' : state.format === 'SVG' ? 'svg' : 'pdf';
+  return state.format === 'JPG' ? 'jpg' : state.format === 'PNG' ? 'png' : state.format === 'SVG' ? 'svg' : state.format === 'HTML' ? 'html' : 'pdf';
 }
 
 function sanitize(n) {

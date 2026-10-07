@@ -8,7 +8,7 @@
 
 ## 1. Project Overview & Current Status
 
-**Velto** is a zero-network, high-performance Figma plugin designed to bulk-export canvas frames, components, and component sets to **PNG, JPG, SVG, or PDF**.
+**Velto** is a zero-network, high-performance Figma plugin designed to bulk-export canvas frames, components, and component sets to **PNG, JPG, SVG, PDF, or standalone HTML**.
 
 ### Key Architectural Tenets
 * **Strictly Offline & Sandboxed:** Operates with `"networkAccess": { "allowedDomains": ["none"] }` in `manifest.json`. Zero external HTTP requests, telemetry, or remote CDN dependencies are allowed.
@@ -122,7 +122,7 @@ Uses `parent.postMessage({ pluginMessage: msg }, '*')`:
 * `{ type: 'ready' }`: Fired on UI boot to request current canvas selection details.
 * `{ type: 'clear' }`: Cancels ongoing thumbnail generation and resets canvas selection (`figma.currentPage.selection = []`).
 * `{ type: 'get-thumbnails', ids: string[] }`: Requests sequential thumbnail generation for specified node IDs.
-* `{ type: 'export', ids: string[], format: 'PNG'|'JPG'|'SVG'|'PDF', scale: number|'none', pdf: 'single'|'each' }`: Starts bulk export process for given IDs.
+* `{ type: 'export', ids: string[], format: 'PNG'|'JPG'|'SVG'|'PDF'|'HTML', scale: number|'none', pdf: 'single'|'each', html: 'single'|'bundle' }`: Starts bulk export process for given IDs.
 
 #### Sandbox Thread to UI Thread (`figma.ui.postMessage(msg)`)
 Listened via `window.addEventListener('message', (e) => { ... })`:

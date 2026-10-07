@@ -353,6 +353,10 @@ body.figma-dark .link:hover {
   gap: 7px;
 }
 
+.seg:has(#btnFmtHtml:not([hidden])) {
+  grid-template-columns: repeat(5, 1fr);
+}
+
 .seg button,
 .scl button {
   border: 1px solid var(--line);
@@ -884,6 +888,7 @@ body.figma-dark .btn.primary:not(:disabled):hover {
           <button data-fmt="JPG" aria-pressed="false">JPG</button>
           <button data-fmt="SVG" aria-pressed="false">SVG</button>
           <button data-fmt="PDF" aria-pressed="false">PDF</button>
+          <button data-fmt="HTML" id="btnFmtHtml" aria-pressed="false" hidden>HTML</button>
         </div>
       </div>
       <div class="g" id="pdfGroup" hidden>
@@ -901,6 +906,25 @@ body.figma-dark .btn.primary:not(:disabled):hover {
             <span>
               <b>One PDF per frame</b><br>
               <span style="color:var(--ink2)">Each frame downloads as its own file.</span>
+            </span>
+          </label>
+        </div>
+      </div>
+      <div class="g" id="htmlGroup" hidden>
+        <h2>HTML mode</h2>
+        <div class="pdf-grid">
+          <label class="radio">
+            <input type="radio" name="htmlmode" value="single" checked>
+            <span>
+              <b>Single file (.html)</b><br>
+              <span style="color:var(--ink2)">Self-contained, portable, zero dependencies.</span>
+            </span>
+          </label>
+          <label class="radio">
+            <input type="radio" name="htmlmode" value="bundle">
+            <span>
+              <b>Web bundle (.zip)</b><br>
+              <span style="color:var(--ink2)">index.html, css/, js/ and assets/ folder.</span>
             </span>
           </label>
         </div>
@@ -1043,6 +1067,7 @@ var state = {
   format: 'PNG',
   scale: 2,
   pdf: 'single',
+  html: 'single',
   running: false,
   finished: false,
   expected: 0,
@@ -1074,7 +1099,7 @@ function effScale() {
 }
 
 function ext() {
-  return state.format === 'JPG' ? 'jpg' : state.format === 'PNG' ? 'png' : state.format === 'SVG' ? 'svg' : 'pdf';
+  return state.format === 'JPG' ? 'jpg' : state.format === 'PNG' ? 'png' : state.format === 'SVG' ? 'svg' : state.format === 'HTML' ? 'html' : 'pdf';
 }
 
 function sanitize(n) {
@@ -1341,6 +1366,15 @@ function toggle(id, on) {
 }
 
 function renderSettings() {
+  var isSingle = selCount() === 1;
+  var htmlBtn = $('btnFmtHtml');
+  if (htmlBtn) {
+    htmlBtn.hidden = !isSingle;
+    if (!isSingle && state.format === 'HTML') {
+      state.format = 'PNG';
+    }
+  }
+
   var btns = document.querySelectorAll('#fmtSeg button');
   for (var i = 0; i < btns.length; i++) {
     btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-fmt') === state.format ? 'true' : 'false');
@@ -1354,8 +1388,17 @@ function renderSettings() {
   var raster = state.format === 'PNG' || state.format === 'JPG';
   $('qualityGroup').hidden = !raster;
   $('pdfGroup').hidden = state.format !== 'PDF';
+  var hg = $('htmlGroup');
+  if (hg) hg.hidden = state.format !== 'HTML';
 
-  if (state.format === 'PDF' && state.pdf === 'single') {
+  var hr = document.querySelectorAll('input[name="htmlmode"]');
+  for (var h = 0; h < hr.length; h++) {
+    hr[h].checked = hr[h].value === state.html;
+  }
+
+  if (state.format === 'HTML') {
+    $('btnExport').textContent = state.html === 'bundle' ? 'Export Web Bundle (.zip)' : 'Export 1 HTML file';
+  } else if (state.format === 'PDF' && state.pdf === 'single') {
     $('btnExport').textContent = 'Export 1 PDF';
   } else {
     $('btnExport').textContent = 'Export ' + selCount() + (selCount() === 1 ? ' file' : ' files');
@@ -1493,7 +1536,7 @@ function startExport() {
 
   if (state.format === 'PDF' && state.pdf === 'single') {
     initPipelinedPdf();
-  } else if (selCount() > 1) {
+  } else if (!(state.format === 'HTML' && state.html === 'single') && selCount() > 1) {
     initPipelinedZip();
   }
 
@@ -1506,7 +1549,8 @@ function startExport() {
     ids: state.order.slice(),
     format: state.format,
     scale: effScale(),
-    pdf: state.pdf
+    pdf: state.pdf,
+    html: state.html
   });
   if (!inFigma) {
     simulate();
@@ -1530,7 +1574,63 @@ function simulate() {
     }
     var label = (f ? f.name : 'Frame') + ' demo bytes';
     var bytes;
-    if (state.format === 'SVG') {
+    if (state.format === 'HTML') {
+      var mockHtmlData = {
+        title: f ? f.name : 'Landing hero',
+        bodyHtml: '<main class="hero-page">\n'
+          + '  <header class="navbar">\n'
+          + '    <div class="brand-group">\n'
+          + '      <svg class="icon-logo" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="28" rx="6" fill="#2563eb"/><path d="M8 14L12 18L20 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\n'
+          + '      <span class="brand-name">Velto</span>\n'
+          + '    </div>\n'
+          + '    <nav class="nav-links">\n'
+          + '      <span class="nav-item">Features</span>\n'
+          + '      <span class="nav-item">Pricing</span>\n'
+          + '      <span class="nav-item">Docs</span>\n'
+          + '    </nav>\n'
+          + '  </header>\n'
+          + '  <section class="hero-content">\n'
+          + '    <h1 class="hero-title">' + (f ? f.name : 'Landing hero') + '</h1>\n'
+          + '    <p class="hero-desc">Clean semantic HTML5 structure with real CSS flexbox layouts and zero SVG clutter.</p>\n'
+          + '    <div class="cta-row">\n'
+          + '      <button class="btn-primary">Get Started Free</button>\n'
+          + '      <button class="btn-secondary">View Documentation</button>\n'
+          + '    </div>\n'
+          + '  </section>\n'
+          + '</main>',
+        cssRules: '.hero-page {\n  width: 100%;\n  max-width: 1200px;\n  margin-inline: auto;\n  padding: 40px 24px;\n  display: flex;\n  flex-direction: column;\n  gap: 48px;\n  min-height: 100vh;\n}\n\n'
+          + '.navbar {\n  display: flex;\n  flex-direction: row;\n  justify-content: space-between;\n  align-items: center;\n  width: 100%;\n}\n\n'
+          + '.brand-group {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  gap: 10px;\n}\n\n'
+          + '.icon-logo {\n  width: 28px;\n  height: 28px;\n  display: inline-block;\n}\n\n'
+          + '.brand-name {\n  font-size: 20px;\n  font-weight: 700;\n  color: #111827;\n}\n\n'
+          + '.nav-links {\n  display: flex;\n  flex-direction: row;\n  gap: 24px;\n}\n\n'
+          + '.nav-item {\n  font-size: 15px;\n  color: #4b5563;\n  cursor: pointer;\n}\n\n'
+          + '.hero-content {\n  display: flex;\n  flex-direction: column;\n  align-items: flex-start;\n  gap: 20px;\n  max-width: 680px;\n}\n\n'
+          + '.hero-title {\n  font-size: 44px;\n  font-weight: 800;\n  line-height: 1.15;\n  letter-spacing: -0.02em;\n  margin: 0;\n  color: #111827;\n}\n\n'
+          + '.hero-desc {\n  font-size: 18px;\n  line-height: 1.55;\n  margin: 0;\n  color: #4b5563;\n}\n\n'
+          + '.cta-row {\n  display: flex;\n  flex-direction: row;\n  gap: 12px;\n  margin-top: 8px;\n}\n\n'
+          + '.btn-primary {\n  padding: 12px 24px;\n  background-color: #2563eb;\n  color: #ffffff;\n  border-radius: 8px;\n  font-size: 15px;\n  font-weight: 600;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n}\n\n'
+          + '.btn-secondary {\n  padding: 12px 24px;\n  background-color: #f3f4f6;\n  color: #1f2937;\n  border-radius: 8px;\n  font-size: 15px;\n  font-weight: 600;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n}',
+        assets: [
+          {
+            path: 'assets/icon-logo-1.svg',
+            name: 'icon-logo',
+            isSvg: true,
+            bytes: new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#2563eb"/><path d="M8 14L12 18L20 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'),
+            svgText: '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#2563eb"/><path d="M8 14L12 18L20 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+          }
+        ]
+      };
+      onFile({
+        id: id,
+        name: f ? f.name : 'Frame',
+        bytes: new Uint8Array(0),
+        index: i,
+        total: state.order.length,
+        isRealHtml: true,
+        htmlData: mockHtmlData
+      });
+    } else if (state.format === 'SVG') {
       var svgMock = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="#f5f5f5"/><text x="200" y="150" font-family="sans-serif" font-size="20" fill="#333" text-anchor="middle" dominant-baseline="middle">' + (f ? f.name : 'Frame') + '</text></svg>';
       bytes = new TextEncoder().encode(svgMock);
       onFile({ id: id, name: f ? f.name : 'Frame', bytes: bytes, index: i, total: state.order.length });
@@ -1550,7 +1650,9 @@ function onFile(msg) {
   var fileItem = {
     id: msg.id,
     name: msg.name || 'Untitled',
-    bytes: u8
+    bytes: u8,
+    isRealHtml: !!msg.isRealHtml,
+    htmlData: msg.htmlData || null
   };
   state.files.push(fileItem);
   state.got++;
@@ -1604,8 +1706,11 @@ async function onDone() {
   $('statusLine').textContent = 'Preparing download…';
   try {
     var singlePdf = state.format === 'PDF' && state.pdf === 'single';
+    var htmlBundle = state.format === 'HTML' && state.html === 'bundle';
     if (singlePdf) {
       await downloadSinglePdf();
+    } else if (htmlBundle) {
+      await downloadHtmlBundle();
     } else if (state.files.length === 1) {
       downloadOne();
     } else {
@@ -1678,10 +1783,15 @@ async function downloadZip() {
   if (!activeZip) {
     var files = orderedFiles();
     files.forEach(function (f) {
-      zip.file((state.plan && state.plan[f.id]) || (f.name + '.' + ext()), f.bytes);
+      if (f.isRealHtml) {
+        var b = toBlob(f);
+        zip.file((state.plan && state.plan[f.id]) || (f.name + '.html'), b);
+      } else {
+        zip.file((state.plan && state.plan[f.id]) || (f.name + '.' + ext()), f.bytes);
+      }
     });
   }
-  var comp = (state.format === 'SVG') ? 'DEFLATE' : 'STORE';
+  var comp = (state.format === 'SVG' || state.format === 'HTML') ? 'DEFLATE' : 'STORE';
   var blob = await zip.generateAsync({ type: 'blob', compression: comp }, function (meta) {
     if (meta && typeof meta.percent === 'number') {
       var pct = Math.round(meta.percent);
@@ -1693,7 +1803,131 @@ async function downloadZip() {
   activeZip = null;
 }
 
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function uint8ToBase64(u8) {
+  if (!u8 || u8.length === 0) return '';
+  var CHUNK_SIZE = 0x8000;
+  var index = 0;
+  var length = u8.length;
+  var result = '';
+  while (index < length) {
+    var slice = u8.subarray(index, Math.min(index + CHUNK_SIZE, length));
+    result += String.fromCharCode.apply(null, slice);
+    index += CHUNK_SIZE;
+  }
+  return btoa(result);
+}
+
+function getCssReset() {
+  return '/* ========================================================\n'
+    + '   Velto Web Project — Compiled from Figma\n'
+    + '   Clean semantic CSS with modern layout and reset\n'
+    + '   ======================================================== */\n\n'
+    + '*, *::before, *::after {\n'
+    + '  box-sizing: border-box;\n'
+    + '}\n\n'
+    + 'html {\n'
+    + '  scroll-behavior: smooth;\n'
+    + '  height: 100%;\n'
+    + '}\n\n'
+    + 'body {\n'
+    + '  margin: 0;\n'
+    + '  padding: 0;\n'
+    + '  min-height: 100vh;\n'
+    + '  background: #ffffff;\n'
+    + '  color: #111827;\n'
+    + '  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;\n'
+    + '  -webkit-font-smoothing: antialiased;\n'
+    + '  -moz-osx-font-smoothing: grayscale;\n'
+    + '  overflow-x: hidden;\n'
+    + '  overflow-y: auto;\n'
+    + '}\n\n'
+    + 'img {\n'
+    + '  max-width: 100%;\n'
+    + '  height: auto;\n'
+    + '  display: block;\n'
+    + '}\n\n'
+    + 'svg {\n'
+    + '  display: block;\n'
+    + '  max-width: 100%;\n'
+    + '}\n\n'
+    + 'button {\n'
+    + '  font-family: inherit;\n'
+    + '  font-size: inherit;\n'
+    + '  line-height: inherit;\n'
+    + '  color: inherit;\n'
+    + '  cursor: pointer;\n'
+    + '  border: none;\n'
+    + '  background: none;\n'
+    + '  padding: 0;\n'
+    + '  margin: 0;\n'
+    + '  text-align: inherit;\n'
+    + '}\n\n'
+    + 'a {\n'
+    + '  color: inherit;\n'
+    + '  text-decoration: none;\n'
+    + '}\n';
+}
+
 function toBlob(f) {
+  if (state.format === 'HTML') {
+    var title = escapeHtml(f.name || 'Frame');
+    if (f.isRealHtml && f.htmlData) {
+      var body = f.htmlData.bodyHtml || '';
+      var cssRules = f.htmlData.cssRules || '';
+
+      // Inline assets as data URIs for self-contained single HTML file
+      if (Array.isArray(f.htmlData.assets)) {
+        f.htmlData.assets.forEach(function (asset) {
+          if (!asset) return;
+          var dataUri = asset.dataUri;
+          if (!dataUri && asset.bytes && asset.bytes.length > 0) {
+            var mime = asset.isSvg ? 'image/svg+xml' : (asset.mime || 'image/png');
+            var b64 = asset.base64 || uint8ToBase64(asset.bytes);
+            dataUri = 'data:' + mime + ';base64,' + b64;
+          }
+          if (dataUri && asset.path && dataUri.length > 30) {
+            body = body.split('src="' + asset.path + '"').join('src="' + dataUri + '"');
+            cssRules = cssRules.split('url("' + asset.path + '")').join('url("' + dataUri + '")');
+            cssRules = cssRules.split("url('" + asset.path + "')").join("url('" + dataUri + "')");
+            cssRules = cssRules.split('url(' + asset.path + ')').join('url(' + dataUri + ')');
+          }
+        });
+      }
+      var singleHtml = '<!DOCTYPE html>\n'
+        + '<html lang="en">\n<head>\n'
+        + '<meta charset="utf-8">\n'
+        + '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+        + '<title>' + title + '</title>\n'
+        + '<style>\n'
+        + getCssReset() + '\n'
+        + cssRules + '\n'
+        + '</style>\n'
+        + '</head>\n<body>\n'
+        + body + '\n'
+        + '<' + 'script>\n'
+        + '// Velto Standalone HTML Export\n'
+        + 'document.addEventListener(\'DOMContentLoaded\', function () {\n'
+        + '  console.log(\'Velto loaded: ' + title + '\');\n'
+        + '});\n'
+        + '<' + '/script>\n'
+        + '</body>\n</html>\n';
+      return new Blob([singleHtml], { type: 'text/html;charset=utf-8' });
+    }
+
+    var rawText = '';
+    try {
+      rawText = new TextDecoder('utf-8').decode(f.bytes);
+    } catch (e) {
+      rawText = String.fromCharCode.apply(null, f.bytes);
+    }
+    var fallbackDoc = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>' + title + '</title>\n<style>\n' + getCssReset() + '\n</style>\n</head>\n<body>\n' + rawText + '\n</body>\n</html>\n';
+    return new Blob([fallbackDoc], { type: 'text/html;charset=utf-8' });
+  }
+
   var mime = state.format === 'PNG' ? 'image/png'
     : state.format === 'JPG' ? 'image/jpeg'
     : state.format === 'SVG' ? 'image/svg+xml'
@@ -1715,6 +1949,72 @@ function download(blob, name) {
     a.remove();
   }, 1000);
 }
+
+async function downloadHtmlBundle() {
+  var f = orderedFiles()[0];
+  var title = escapeHtml(f.name || 'Frame');
+  var zip = new JSZip();
+
+  if (f.isRealHtml && f.htmlData) {
+    var indexHtml = '<!DOCTYPE html>\n'
+      + '<html lang="en">\n<head>\n'
+      + '<meta charset="utf-8">\n'
+      + '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+      + '<title>' + title + '</title>\n'
+      + '<link rel="stylesheet" href="css/style.css">\n'
+      + '</head>\n<body>\n'
+      + (f.htmlData.bodyHtml || '') + '\n'
+      + '<' + 'script src="js/main.js"><' + '/script>\n'
+      + '</body>\n</html>\n';
+
+    var rawCss = f.htmlData.cssRules || '';
+    // In external stylesheet css/style.css, assets are at ../assets/
+    var adjustedCss = rawCss
+      .split('url("assets/').join('url("../assets/')
+      .split("url('assets/").join("url('../assets/")
+      .split('url(assets/').join('url(../assets/');
+    var cssContent = getCssReset() + '\n' + adjustedCss;
+
+    var jsContent = '// Velto Web Project Script\n'
+      + 'document.addEventListener(\'DOMContentLoaded\', function () {\n'
+      + '  console.log(\'Velto project loaded: ' + title + '\');\n'
+      + '});\n';
+
+    zip.file('index.html', indexHtml);
+    zip.file('css/style.css', cssContent);
+    zip.file('js/main.js', jsContent);
+
+    if (Array.isArray(f.htmlData.assets)) {
+      f.htmlData.assets.forEach(function (asset) {
+        if (asset && asset.path && asset.bytes) {
+          zip.file(asset.path, asset.bytes);
+        }
+      });
+    }
+  } else {
+    var rawText = '';
+    try {
+      rawText = new TextDecoder('utf-8').decode(f.bytes);
+    } catch (e) {
+      rawText = String.fromCharCode.apply(null, f.bytes);
+    }
+    var fallbackHtml = '<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8"><title>' + title + '</title><link rel="stylesheet" href="css/style.css"></head><body>' + rawText + '<' + 'script src="js/main.js"><' + '/script></body></html>';
+    zip.file('index.html', fallbackHtml);
+    zip.file('css/style.css', getCssReset());
+    zip.file('js/main.js', '// Velto project script\n');
+  }
+
+  $('statusLine').textContent = 'Creating web bundle…';
+  var blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }, function (meta) {
+    if (meta && typeof meta.percent === 'number') {
+      var pct = Math.round(meta.percent);
+      $('statusLine').textContent = 'Packaging ' + pct + '%…';
+      updateProgress(pct / 100);
+    }
+  });
+  download(blob, sanitize(f.name) + '-web.zip');
+}
+
 
 
 var activeMergedPdf = null;
@@ -1891,6 +2191,15 @@ function wire() {
     pr[k].onchange = function () {
       var c = document.querySelector('input[name="pdfmode"]:checked');
       state.pdf = c ? c.value : 'single';
+      renderSettings();
+    };
+  }
+
+  var hr = document.querySelectorAll('input[name="htmlmode"]');
+  for (var m = 0; m < hr.length; m++) {
+    hr[m].onchange = function () {
+      var c = document.querySelector('input[name="htmlmode"]:checked');
+      state.html = c ? c.value : 'single';
       renderSettings();
     };
   }

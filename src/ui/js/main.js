@@ -93,6 +93,15 @@ function wire() {
       renderSettings();
     };
   }
+
+  var hr = document.querySelectorAll('input[name="htmlmode"]');
+  for (var m = 0; m < hr.length; m++) {
+    hr[m].onchange = function () {
+      var c = document.querySelector('input[name="htmlmode"]:checked');
+      state.html = c ? c.value : 'single';
+      renderSettings();
+    };
+  }
 }
 
 function applyTheme() {

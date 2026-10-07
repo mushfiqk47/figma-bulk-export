@@ -150,6 +150,15 @@ function toggle(id, on) {
 }
 
 function renderSettings() {
+  var isSingle = selCount() === 1;
+  var htmlBtn = $('btnFmtHtml');
+  if (htmlBtn) {
+    htmlBtn.hidden = !isSingle;
+    if (!isSingle && state.format === 'HTML') {
+      state.format = 'PNG';
+    }
+  }
+
   var btns = document.querySelectorAll('#fmtSeg button');
   for (var i = 0; i < btns.length; i++) {
     btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-fmt') === state.format ? 'true' : 'false');
@@ -163,8 +172,17 @@ function renderSettings() {
   var raster = state.format === 'PNG' || state.format === 'JPG';
   $('qualityGroup').hidden = !raster;
   $('pdfGroup').hidden = state.format !== 'PDF';
+  var hg = $('htmlGroup');
+  if (hg) hg.hidden = state.format !== 'HTML';
 
-  if (state.format === 'PDF' && state.pdf === 'single') {
+  var hr = document.querySelectorAll('input[name="htmlmode"]');
+  for (var h = 0; h < hr.length; h++) {
+    hr[h].checked = hr[h].value === state.html;
+  }
+
+  if (state.format === 'HTML') {
+    $('btnExport').textContent = state.html === 'bundle' ? 'Export Web Bundle (.zip)' : 'Export 1 HTML file';
+  } else if (state.format === 'PDF' && state.pdf === 'single') {
     $('btnExport').textContent = 'Export 1 PDF';
   } else {
     $('btnExport').textContent = 'Export ' + selCount() + (selCount() === 1 ? ' file' : ' files');

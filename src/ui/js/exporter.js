@@ -114,7 +114,7 @@ function startExport() {
 
   if (state.format === 'PDF' && state.pdf === 'single') {
     initPipelinedPdf();
-  } else if (selCount() > 1) {
+  } else if (!(state.format === 'HTML' && state.html === 'single') && selCount() > 1) {
     initPipelinedZip();
   }
 
@@ -127,7 +127,8 @@ function startExport() {
     ids: state.order.slice(),
     format: state.format,
     scale: effScale(),
-    pdf: state.pdf
+    pdf: state.pdf,
+    html: state.html
   });
   if (!inFigma) {
     simulate();
@@ -151,7 +152,63 @@ function simulate() {
     }
     var label = (f ? f.name : 'Frame') + ' demo bytes';
     var bytes;
-    if (state.format === 'SVG') {
+    if (state.format === 'HTML') {
+      var mockHtmlData = {
+        title: f ? f.name : 'Landing hero',
+        bodyHtml: '<main class="hero-page">\n'
+          + '  <header class="navbar">\n'
+          + '    <div class="brand-group">\n'
+          + '      <svg class="icon-logo" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="28" height="28" rx="6" fill="#2563eb"/><path d="M8 14L12 18L20 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\n'
+          + '      <span class="brand-name">Velto</span>\n'
+          + '    </div>\n'
+          + '    <nav class="nav-links">\n'
+          + '      <span class="nav-item">Features</span>\n'
+          + '      <span class="nav-item">Pricing</span>\n'
+          + '      <span class="nav-item">Docs</span>\n'
+          + '    </nav>\n'
+          + '  </header>\n'
+          + '  <section class="hero-content">\n'
+          + '    <h1 class="hero-title">' + (f ? f.name : 'Landing hero') + '</h1>\n'
+          + '    <p class="hero-desc">Clean semantic HTML5 structure with real CSS flexbox layouts and zero SVG clutter.</p>\n'
+          + '    <div class="cta-row">\n'
+          + '      <button class="btn-primary">Get Started Free</button>\n'
+          + '      <button class="btn-secondary">View Documentation</button>\n'
+          + '    </div>\n'
+          + '  </section>\n'
+          + '</main>',
+        cssRules: '.hero-page {\n  width: 100%;\n  max-width: 1200px;\n  margin-inline: auto;\n  padding: 40px 24px;\n  display: flex;\n  flex-direction: column;\n  gap: 48px;\n  min-height: 100vh;\n}\n\n'
+          + '.navbar {\n  display: flex;\n  flex-direction: row;\n  justify-content: space-between;\n  align-items: center;\n  width: 100%;\n}\n\n'
+          + '.brand-group {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  gap: 10px;\n}\n\n'
+          + '.icon-logo {\n  width: 28px;\n  height: 28px;\n  display: inline-block;\n}\n\n'
+          + '.brand-name {\n  font-size: 20px;\n  font-weight: 700;\n  color: #111827;\n}\n\n'
+          + '.nav-links {\n  display: flex;\n  flex-direction: row;\n  gap: 24px;\n}\n\n'
+          + '.nav-item {\n  font-size: 15px;\n  color: #4b5563;\n  cursor: pointer;\n}\n\n'
+          + '.hero-content {\n  display: flex;\n  flex-direction: column;\n  align-items: flex-start;\n  gap: 20px;\n  max-width: 680px;\n}\n\n'
+          + '.hero-title {\n  font-size: 44px;\n  font-weight: 800;\n  line-height: 1.15;\n  letter-spacing: -0.02em;\n  margin: 0;\n  color: #111827;\n}\n\n'
+          + '.hero-desc {\n  font-size: 18px;\n  line-height: 1.55;\n  margin: 0;\n  color: #4b5563;\n}\n\n'
+          + '.cta-row {\n  display: flex;\n  flex-direction: row;\n  gap: 12px;\n  margin-top: 8px;\n}\n\n'
+          + '.btn-primary {\n  padding: 12px 24px;\n  background-color: #2563eb;\n  color: #ffffff;\n  border-radius: 8px;\n  font-size: 15px;\n  font-weight: 600;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n}\n\n'
+          + '.btn-secondary {\n  padding: 12px 24px;\n  background-color: #f3f4f6;\n  color: #1f2937;\n  border-radius: 8px;\n  font-size: 15px;\n  font-weight: 600;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n}',
+        assets: [
+          {
+            path: 'assets/icon-logo-1.svg',
+            name: 'icon-logo',
+            isSvg: true,
+            bytes: new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#2563eb"/><path d="M8 14L12 18L20 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'),
+            svgText: '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#2563eb"/><path d="M8 14L12 18L20 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+          }
+        ]
+      };
+      onFile({
+        id: id,
+        name: f ? f.name : 'Frame',
+        bytes: new Uint8Array(0),
+        index: i,
+        total: state.order.length,
+        isRealHtml: true,
+        htmlData: mockHtmlData
+      });
+    } else if (state.format === 'SVG') {
       var svgMock = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="#f5f5f5"/><text x="200" y="150" font-family="sans-serif" font-size="20" fill="#333" text-anchor="middle" dominant-baseline="middle">' + (f ? f.name : 'Frame') + '</text></svg>';
       bytes = new TextEncoder().encode(svgMock);
       onFile({ id: id, name: f ? f.name : 'Frame', bytes: bytes, index: i, total: state.order.length });
@@ -171,7 +228,9 @@ function onFile(msg) {
   var fileItem = {
     id: msg.id,
     name: msg.name || 'Untitled',
-    bytes: u8
+    bytes: u8,
+    isRealHtml: !!msg.isRealHtml,
+    htmlData: msg.htmlData || null
   };
   state.files.push(fileItem);
   state.got++;
