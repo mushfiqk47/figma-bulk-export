@@ -150,14 +150,8 @@ function toggle(id, on) {
 }
 
 function renderSettings() {
-  var isSingle = selCount() === 1;
   var htmlBtn = $('btnFmtHtml');
-  if (htmlBtn) {
-    htmlBtn.hidden = !isSingle;
-    if (!isSingle && state.format === 'HTML') {
-      state.format = 'PNG';
-    }
-  }
+  if (htmlBtn) htmlBtn.hidden = false;
 
   var btns = document.querySelectorAll('#fmtSeg button');
   for (var i = 0; i < btns.length; i++) {
@@ -181,7 +175,8 @@ function renderSettings() {
   }
 
   if (state.format === 'HTML') {
-    $('btnExport').textContent = state.html === 'bundle' ? 'Export Web Bundle (.zip)' : 'Export 1 HTML file';
+    if (state.html === 'bundle') $('btnExport').textContent = selCount() === 1 ? 'Export Web Bundle (.zip)' : 'Export ' + selCount() + ' Web Bundles (.zip)';
+    else $('btnExport').textContent = selCount() === 1 ? 'Export 1 HTML file' : 'Export ' + selCount() + ' HTML files (.zip)';
   } else if (state.format === 'PDF' && state.pdf === 'single') {
     $('btnExport').textContent = 'Export 1 PDF';
   } else {

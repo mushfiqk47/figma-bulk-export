@@ -268,11 +268,8 @@ function download(blob, name) {
   }, 1000);
 }
 
-async function downloadHtmlBundle() {
-  var f = orderedFiles()[0];
+function bundleHtmlFrame(zip, f, prefix) {
   var title = escapeHtml(f.name || 'Frame');
-  var zip = new JSZip();
-
   if (f.isRealHtml && f.htmlData) {
     var indexHtml = '<!DOCTYPE html>\n'
       + '<html lang="en">\n<head>\n'
@@ -298,14 +295,14 @@ async function downloadHtmlBundle() {
       + '  console.log(\'Velto project loaded: ' + title + '\');\n'
       + '});\n';
 
-    zip.file('index.html', indexHtml);
-    zip.file('css/style.css', cssContent);
-    zip.file('js/main.js', jsContent);
+    zip.file(prefix + 'index.html', indexHtml);
+    zip.file(prefix + 'css/style.css', cssContent);
+    zip.file(prefix + 'js/main.js', jsContent);
 
     if (Array.isArray(f.htmlData.assets)) {
       f.htmlData.assets.forEach(function (asset) {
         if (asset && asset.path && asset.bytes) {
-          zip.file(asset.path, asset.bytes);
+          zip.file(prefix + asset.path, asset.bytes);
         }
       });
     }
@@ -317,10 +314,29 @@ async function downloadHtmlBundle() {
       rawText = String.fromCharCode.apply(null, f.bytes);
     }
     var fallbackHtml = '<!DOCTYPE html>\n<html lang="en"><head><meta charset="utf-8"><title>' + title + '</title><link rel="stylesheet" href="css/style.css"></head><body>' + rawText + '<' + 'script src="js/main.js"><' + '/script></body></html>';
-    zip.file('index.html', fallbackHtml);
-    zip.file('css/style.css', getCssReset());
-    zip.file('js/main.js', '// Velto project script\n');
+    zip.file(prefix + 'index.html', fallbackHtml);
+    zip.file(prefix + 'css/style.css', getCssReset());
+    zip.file(prefix + 'js/main.js', '// Velto project script\n');
   }
+}
+
+async function downloadHtmlBundle() {
+  // One folder per frame, so multi-frame bundles keep working relative
+  // paths (index.html -> assets/.., css/style.css -> ../assets/).
+  var files = orderedFiles();
+  var zip = new JSZip();
+  var multi = files.length > 1;
+  var usedSlugs = {};
+  files.forEach(function (f) {
+    var slug = sanitize(f.name) || 'frame';
+    if (usedSlugs[slug] === undefined) {
+      usedSlugs[slug] = 1;
+    } else {
+      usedSlugs[slug]++;
+      slug = slug + '-' + usedSlugs[slug];
+    }
+    bundleHtmlFrame(zip, f, multi ? slug + '/' : '');
+  });
 
   $('statusLine').textContent = 'Creating web bundle…';
   var blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }, function (meta) {
@@ -330,6 +346,6 @@ async function downloadHtmlBundle() {
       updateProgress(pct / 100);
     }
   });
-  download(blob, sanitize(f.name) + '-web.zip');
+  download(blob, multi ? 'velto-web-bundle.zip' : sanitize(files[0].name) + '-web.zip');
 }
 

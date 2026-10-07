@@ -37,13 +37,16 @@ function canvasSelection() {
 function selectedDetails(sel) {
   var out = [];
   var seen = {};
+  var skipped = 0;
   var list = sel || canvasSelection();
   var pg = '';
   try { pg = figma.currentPage ? figma.currentPage.name : ''; } catch (e) {}
 
   for (var i = 0; i < list.length; i++) {
     var target = getExportableNode(list[i]);
-    if (target && !seen[target.id]) {
+    if (!target) {
+      skipped++;
+    } else if (!seen[target.id]) {
       seen[target.id] = true;
       var w = 0, h = 0;
       try { w = Math.round(target.width || 0); h = Math.round(target.height || 0); } catch (e) {}
@@ -51,7 +54,9 @@ function selectedDetails(sel) {
       try { nm = String(target.name || 'Untitled'); } catch (e) {}
       out.push({ id: target.id, name: nm, width: w, height: h, page: pg });
     }
+    // Duplicates of an already-seen frame are not skipped, just deduped.
   }
+  out.skipped = skipped;
   return out;
 }
 
@@ -62,7 +67,7 @@ function postFrames() {
     type: 'frames',
     selected: details.map(function (d) { return d.id; }),
     selectedFrames: details,
-    skipped: Math.max(0, sel.length - details.length)
+    skipped: details.skipped || 0
   });
 }
 
@@ -220,11 +225,12 @@ function prepareInlineSvg(rawSvg, cls, w, h) {
     s = s.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
   }
 
-  // Ensure width and height attributes exist for crisp scaling
-  if (!/width=["'][0-9]+(\.[0-9]+)?(px)?["']/.test(s) && w > 0) {
+  // Ensure width and height attributes exist for crisp scaling.
+  // (% allowed: width="100%" is valid and must not gain a duplicate attribute)
+  if (!/width=["'][0-9]+(\.[0-9]+)?(px|%)?["']/.test(s) && w > 0) {
     s = s.replace('<svg', '<svg width="' + w + '"');
   }
-  if (!/height=["'][0-9]+(\.[0-9]+)?(px)?["']/.test(s) && h > 0) {
+  if (!/height=["'][0-9]+(\.[0-9]+)?(px|%)?["']/.test(s) && h > 0) {
     s = s.replace('<svg', '<svg height="' + h + '"');
   }
 
@@ -523,6 +529,7 @@ async function compileNodeToRealHtml(rootNode) {
       // for nodes that fail SVG export. Inlining that as markup leaks raw
       // bytes into the page and breaks layout. Fall back to PNG instead.
       if (svgText.indexOf('<svg') < 0) {
+        console.warn('[Velto:Sandbox] SVG export failed, PNG fallback:', n.name);
         svgText = '';
         try {
           var pOut = await n.exportAsync({ format: 'PNG' });
@@ -921,7 +928,8 @@ async function compileNodeToRealHtml(rootNode) {
       for (var ch = 0; ch < n.children.length; ch++) {
         var childResult = await walk(n.children[ch], false, hasAutoLayout, n.layoutMode, n);
         if (childResult) childrenHtml.push(childResult);
-        await new Promise(function (r) { setTimeout(r, 0); });
+        // ponytail: yield every 8th node, every node if jank returns
+        if (ch % 8 === 7) await new Promise(function (r) { setTimeout(r, 0); });
       }
     }
 

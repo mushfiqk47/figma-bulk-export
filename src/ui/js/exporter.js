@@ -114,12 +114,18 @@ function startExport() {
 
   if (state.format === 'PDF' && state.pdf === 'single') {
     initPipelinedPdf();
-  } else if (!(state.format === 'HTML' && state.html === 'single') && selCount() > 1) {
+  } else if (state.format !== 'HTML' && selCount() > 1) {
+    // HTML (single or bundle) assembles its zip at the end from orderedFiles,
+    // since pipelined addFileToPipelinedZip only stores raw bytes (empty for HTML).
     initPipelinedZip();
   }
 
   setStatus();
   updateProgress(0);
+  // ponytail: naive frames*scale heuristic, not measured memory. Warn only.
+  if ((state.format === 'PNG' || state.format === 'JPG') && selCount() * effScale() > 40) {
+    $('statusLine').textContent = 'Large export — if Figma stalls, retry at 1x or 2x.';
+  }
   var b2 = $('btnBack2'); if (b2) b2.disabled = true;
   var bm = $('btnMore'); if (bm) bm.disabled = true;
   send({
